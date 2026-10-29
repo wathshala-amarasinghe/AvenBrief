@@ -19,7 +19,7 @@ export default function FeaturedNews() {
             href={`/news/${featured.slug}`}
             className="group block"
           >
-            <div className="relative aspect-[16/9] overflow-hidden rounded-xl">
+            <div className="relative aspect-video overflow-hidden rounded-xl">
               <Image
                 src={featured.imageSrc}
                 alt={featured.imageAlt}
@@ -55,7 +55,7 @@ export default function FeaturedNews() {
                 href={`/news/${article.slug}`}
                 className="group block"
               >
-                <div className="relative aspect-[16/8] overflow-hidden rounded-xl">
+                <div className="relative aspect-16/8 overflow-hidden rounded-xl">
                   <Image
                     src={article.imageSrc}
                     alt={article.imageAlt}

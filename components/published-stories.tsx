@@ -1,8 +1,12 @@
 import Link from "next/link";
+import { io } from "next/cache";
 import { getPublishedArticles } from "@/lib/published-articles";
 import type { ArticlePreview } from "@/lib/article-types";
 
 export default async function PublishedStories() {
+  // Suspend outside the error handler so Next.js can build the static shell.
+  await io();
+
   let articles: ArticlePreview[];
   try {
     articles = await getPublishedArticles();

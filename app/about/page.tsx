@@ -27,6 +27,18 @@ const topics = [
       "The environment, clean energy and our shared future.",
     href: "/category/climate",
   },
+  {
+    title: "Finance",
+    description:
+      "Markets, economic trends and financial insights shaping global business.",
+    href: "/category/finance",
+  },
+  {
+    title: "Gaming",
+    description:
+      "News, industry updates and culture across the gaming universe.",
+    href: "/category/gaming",
+  },
 ];
 
 export default function AboutPage() {

@@ -8,7 +8,7 @@ import { normalisePage, normaliseQuery } from "@/lib/article-browse.mjs";
 
 export const metadata: Metadata = {
   title: "Search | AvenBrief",
-  description: "Search published AvenBrief stories about world news, technology and climate.",
+  description: "Search published AvenBrief stories about world news, technology, climate, finance and gaming.",
 };
 
 type SearchPageProps = {

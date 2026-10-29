@@ -73,7 +73,7 @@ async function ArticleContent({ params }: ArticlePageProps) {
 
         <div className="mx-auto mt-10 max-w-3xl space-y-6 text-lg leading-8">
           {article.paragraphs.map((paragraph, index) => (
-            <p key={index} className="whitespace-pre-wrap break-words">{paragraph}</p>
+            <p key={index} className="whitespace-pre-wrap wrap-break-word">{paragraph}</p>
           ))}
 
           {article.source_url && (

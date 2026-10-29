@@ -36,6 +36,18 @@ async function AdminDashboard() {
         </div>
 
         <div className="flex flex-wrap items-center gap-4">
+          <Link
+            href="/admin/sources"
+            className="rounded-xl border border-border px-5 py-3 hover:bg-soft"
+          >
+            RSS sources
+          </Link>
+          <Link
+            href="/admin/inbox"
+            className="rounded-xl border border-border px-5 py-3 hover:bg-soft"
+          >
+            RSS inbox
+          </Link>
           <Link href="/admin/editor" className="rounded-xl bg-brand px-5 py-3 font-medium text-white hover:bg-blue-700">
             New article
           </Link>

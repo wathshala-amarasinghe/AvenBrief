@@ -51,7 +51,7 @@ async function EditorContent({ searchParams }: EditorPageProps) {
         {article ? "Edit article" : "New article"}
       </h1>
 
-      {saved && (
+      {saved && article && (
         <p role="status" className="mt-6 rounded-xl bg-soft p-4 text-brand">
           {article.status === "published" ? "Article published." : "Draft saved privately."}
         </p>

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
 import { isArticleId } from "@/lib/article-validation.mjs";
+import { getHeadlinesFromSource } from "@/lib/rss";
 import { validateRssSource } from "@/lib/rss-source-validation.mjs";
 import { getAdminSupabase } from "@/lib/supabase-admin";
 
@@ -21,6 +22,17 @@ function logDatabaseError(context: string, error: {
   });
 }
 
+async function verifyFeed(feedUrl: string) {
+  try {
+    await getHeadlinesFromSource(feedUrl);
+    return true;
+  } catch (error) {
+    console.error("RSS source verification failed:",
+      error instanceof Error ? error.message : "Unknown feed error.");
+    return false;
+  }
+}
+
 export async function addSource(formData: FormData) {
   await requireAdmin();
   const result = validateRssSource(Object.fromEntries(formData.entries()));
@@ -28,6 +40,13 @@ export async function addSource(formData: FormData) {
   if (!result.ok) {
     redirect(
       "/admin/sources?result=invalid&message=" + encodeURIComponent(result.error),
+    );
+  }
+
+  if (!(await verifyFeed(result.value.feed_url))) {
+    redirect(
+      "/admin/sources?result=invalid&message=" +
+        encodeURIComponent("This URL did not return a valid RSS or Atom feed."),
     );
   }
 
@@ -60,6 +79,13 @@ export async function updateSource(formData: FormData) {
   if (!result.ok) {
     redirect(
       "/admin/sources?result=invalid&message=" + encodeURIComponent(result.error),
+    );
+  }
+
+  if (!(await verifyFeed(result.value.feed_url))) {
+    redirect(
+      "/admin/sources?result=invalid&message=" +
+        encodeURIComponent("This URL did not return a valid RSS or Atom feed."),
     );
   }
 

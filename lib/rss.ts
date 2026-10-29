@@ -83,6 +83,11 @@ async function fetchFeed(feedUrl: string) {
       throw new Error(`RSS request failed with status ${response.status}.`);
     }
 
+    const contentType = response.headers.get("content-type")?.toLowerCase() ?? "";
+    if (contentType.includes("text/html")) {
+      throw new Error("The URL returned a web page instead of an RSS or Atom feed.");
+    }
+
     const declaredSize = Number(response.headers.get("content-length"));
     if (Number.isFinite(declaredSize) && declaredSize > MAX_FEED_BYTES) {
       throw new Error("RSS feed is larger than the allowed import limit.");

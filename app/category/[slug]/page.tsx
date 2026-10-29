@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import Link from "next/link";
 import { connection } from "next/server";
 import { notFound } from "next/navigation";
 import SiteHeader from "@/components/site-header";
@@ -39,12 +38,13 @@ async function CategoryContent({ params, searchParams }: CategoryPageProps) {
   const page = normalisePage(search.page);
 
   return (
-    <main className="mx-auto max-w-7xl px-6 py-10">
-      <Link href="/" className="text-sm text-muted hover:text-brand">← Back to home</Link>
-      <section className="border-b border-border py-10">
-        <p className="text-sm font-semibold uppercase tracking-wider text-brand">Explore AvenBrief</p>
-        <h1 className="mt-4 font-serif text-5xl font-semibold md:text-6xl">{category.name}</h1>
-        <p className="mt-5 max-w-2xl text-lg leading-8 text-muted">{category.description}</p>
+    <main className="mx-auto max-w-328 px-6 pb-12 pt-8 md:px-8 xl:px-0">
+      <section className="border-b border-border pb-8 md:pb-10">
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand">In focus</p>
+        <div className="mt-3 grid items-end gap-5 md:grid-cols-[1fr_420px]">
+          <h1 className="font-serif text-[44px] font-semibold leading-none md:text-[64px]">{category.name}</h1>
+          <p className="max-w-xl text-sm leading-6 text-muted md:pb-1 md:text-base">{category.description}</p>
+        </div>
       </section>
       <Suspense key={slug + ":" + page} fallback={<p className="py-10 text-muted">Loading stories…</p>}>
         <ArticleResults category={category.name} page={page} basePath={"/category/" + category.slug} />

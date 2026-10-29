@@ -1,111 +1,58 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import SiteHeader from "@/components/site-header";
 
 export const metadata: Metadata = {
   title: "About AvenBrief | The World, Made Clear",
-  description:
-    "Meet AvenBrief, a news project focused on clear summaries and useful context about the world.",
+  description: "AvenBrief brings readers clear news summaries, useful context, and links to original sources.",
 };
 
-const topics = [
-  {
-    title: "World",
-    description:
-      "Stories about communities, cities and the events shaping everyday life.",
-    href: "/category/world",
-  },
-  {
-    title: "Technology",
-    description:
-      "Ideas and innovations changing how we live, work and connect.",
-    href: "/category/technology",
-  },
-  {
-    title: "Climate",
-    description:
-      "The environment, clean energy and our shared future.",
-    href: "/category/climate",
-  },
-  {
-    title: "Finance",
-    description:
-      "Markets, economic trends and financial insights shaping global business.",
-    href: "/category/finance",
-  },
-  {
-    title: "Gaming",
-    description:
-      "News, industry updates and culture across the gaming universe.",
-    href: "/category/gaming",
-  },
+const principles = [
+  { icon: "/figma/check.svg", title: "Clarity first", text: "We explain complex stories in direct language, without losing the context that matters." },
+  { icon: "/figma/document.svg", title: "Source-led", text: "Our stories point readers toward original reporting and primary sources whenever possible." },
+  { icon: "/figma/globe.svg", title: "A wider view", text: "We look beyond the loudest headlines to understand how change is felt around the world." },
 ];
 
 export default function AboutPage() {
   return (
     <div className="min-h-screen bg-white text-ink">
       <SiteHeader />
-
-      <main className="mx-auto max-w-5xl px-6 py-12 md:py-20">
-        <section className="max-w-3xl">
-          <p className="text-sm font-semibold uppercase tracking-wider text-brand">
-            About AvenBrief
-          </p>
-
-          <h1 className="mt-5 font-serif text-5xl font-semibold leading-tight md:text-7xl">
-            The world, made clear.
-          </h1>
-
-          <p className="mt-8 text-xl leading-9 text-muted">
-            Understanding the world should feel accessible.
-            AvenBrief is being built to bring readers clear news
-            summaries, useful context and links to original sources.
-          </p>
-
-          <p className="mt-5 text-lg leading-8 text-muted">
-            Our aim is to help you discover important stories and
-            explore the topics that matter to you.
-          </p>
-        </section>
-
-        <section className="mt-14 border-t border-border pt-10">
-          <h2 className="font-serif text-3xl font-semibold">
-            Explore our topics
-          </h2>
-
-          <div className="mt-7 grid gap-5 md:grid-cols-3">
-            {topics.map((topic) => (
-              <Link
-                key={topic.href}
-                href={topic.href}
-                className="group rounded-xl border border-border p-6 transition-colors hover:bg-soft"
-              >
-                <h3 className="font-serif text-2xl font-semibold group-hover:text-brand">
-                  {topic.title}
-                </h3>
-
-                <p className="mt-3 leading-7 text-muted">
-                  {topic.description}
-                </p>
-
-                <p className="mt-5 font-medium text-brand">
-                  Explore stories →
-                </p>
-              </Link>
-            ))}
+      <main className="mx-auto max-w-328 px-6 pb-16 pt-9 md:px-8 md:pt-14 xl:px-0">
+        <section className="grid items-center gap-10 md:grid-cols-[minmax(0,1fr)_minmax(420px,0.9fr)] md:gap-16">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand">About AvenBrief</p>
+            <h1 className="mt-5 max-w-xl font-serif text-[48px] font-semibold leading-[1.05] md:text-[68px]">The world, made clear.</h1>
+            <p className="mt-7 max-w-xl text-lg leading-8 text-muted">AvenBrief is an independent news project built for readers who want the important story, the useful context, and a clear path to learn more.</p>
+            <Link href="/category/world" className="mt-8 inline-flex rounded-lg bg-brand px-5 py-3 text-sm font-medium text-white hover:bg-blue-700">Explore our coverage</Link>
+          </div>
+          <div className="relative aspect-4/3 overflow-hidden rounded-[10px]">
+            <Image src="/figma/about-work.png" alt="A calm workspace with a laptop and notebook" fill sizes="(min-width: 768px) 580px, 100vw" className="object-cover" priority />
           </div>
         </section>
 
-        <aside className="mt-12 rounded-xl bg-soft p-6">
-          <h2 className="font-serif text-2xl font-semibold">
-            A project in progress
-          </h2>
-          <p className="mt-3 leading-7 text-muted">
-            This preview contains sample articles and images.
-            They demonstrate the website experience and should
-            not be treated as current news reporting.
-          </p>
-        </aside>
+        <section className="mt-16 border-t border-border pt-10 md:mt-20">
+          <div className="grid gap-8 md:grid-cols-[0.72fr_1fr] md:gap-20">
+            <h2 className="font-serif text-[36px] font-semibold leading-tight">News that respects your time.</h2>
+            <div className="space-y-5 text-base leading-8 text-muted">
+              <p>The news can be overwhelming. AvenBrief is designed to be calmer: fewer distractions, strong visual hierarchy, and concise reporting that gives you the shape of a story without flattening its nuance.</p>
+              <p>Our editorial workflow remains review-first. Automated feeds help us discover stories, but people decide what is written, checked, edited, and published.</p>
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-16 rounded-[10px] bg-soft p-6 md:p-10">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand">How we work</p>
+          <div className="mt-7 grid gap-7 md:grid-cols-3">
+            {principles.map((principle) => (
+              <article key={principle.title}>
+                <span className="grid h-11 w-11 place-items-center rounded-full bg-white"><Image src={principle.icon} alt="" width={20} height={20} /></span>
+                <h2 className="mt-5 font-serif text-2xl font-semibold">{principle.title}</h2>
+                <p className="mt-3 text-sm leading-6 text-muted">{principle.text}</p>
+              </article>
+            ))}
+          </div>
+        </section>
       </main>
     </div>
   );

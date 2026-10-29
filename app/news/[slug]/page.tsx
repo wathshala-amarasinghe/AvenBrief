@@ -4,12 +4,17 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import SiteHeader from "@/components/site-header";
+import NewsCard from "@/components/news-card";
 import { articles as samples } from "@/lib/news";
 import { getReaderArticle } from "@/lib/published-articles";
 
 type ArticlePageProps = { params: Promise<{ slug: string }> };
-
 export const instant = false;
+
+const categoryImages: Record<string, string> = {
+  World: "/figma/article-tram.png", Technology: "/figma/tram.png",
+  Climate: "/figma/energy.png", Finance: "/figma/work.png", Gaming: "/figma/coast.png",
+};
 
 export function generateStaticParams() {
   return samples.map((article) => ({ slug: article.slug }));
@@ -19,85 +24,66 @@ export async function generateMetadata({ params }: ArticlePageProps): Promise<Me
   const { slug } = await params;
   const article = await getReaderArticle(slug);
   if (!article) notFound();
-
-  return {
-    title: article.title + " | AvenBrief",
-    description: article.summary,
-  };
+  return { title: article.title + " | AvenBrief", description: article.summary };
 }
 
 async function ArticleContent({ params }: ArticlePageProps) {
   const { slug } = await params;
   const article = await getReaderArticle(slug);
   if (!article) notFound();
+  const imageSrc = article.imageSrc ?? categoryImages[article.category] ?? categoryImages.World;
+  const published = article.published_at
+    ? new Intl.DateTimeFormat("en", { dateStyle: "long", timeZone: "UTC" }).format(new Date(article.published_at))
+    : "30 October 2026";
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-10">
-      <Link href="/" className="text-sm text-muted hover:text-brand">← Back to home</Link>
-      <article className="mt-8">
-        <Link href={"/category/" + article.category.toLowerCase()}
-          className="text-sm font-semibold uppercase tracking-wider text-brand hover:underline">
-          {article.category}
-        </Link>
-        <h1 className="mt-4 font-serif text-4xl font-semibold leading-tight md:text-6xl">
-          {article.title}
-        </h1>
-        <p className="mt-6 text-xl leading-8 text-muted">{article.summary}</p>
-
-        {article.isSample ? (
-          <p className="mt-5 text-sm text-muted">Sample article · Development preview</p>
-        ) : (
-          <p className="mt-5 text-sm text-muted">
-            By {article.author_name}
-            {article.published_at && (
-              <>
-                {" · "}
-                <time dateTime={article.published_at}>
-                  {new Intl.DateTimeFormat("en", {
-                    dateStyle: "medium",
-                    timeZone: "UTC",
-                  }).format(new Date(article.published_at))}
-                </time>
-              </>
-            )}
-          </p>
-        )}
-
-        {article.imageSrc && (
-          <div className="relative mt-8 aspect-video overflow-hidden rounded-xl">
-            <Image src={article.imageSrc} alt={article.imageAlt} fill
-              sizes="(min-width: 1024px) 976px, 100vw"
-              className="object-cover" loading="eager" />
+    <main className="mx-auto max-w-[1312px] px-6 pb-14 pt-8 md:px-8 md:pt-12 xl:px-0">
+      <article>
+        <header className="mx-auto max-w-[980px] text-center">
+          <Link href={`/category/${article.category.toLowerCase()}`} className="text-xs font-semibold uppercase tracking-[0.14em] text-brand hover:underline">{article.category}</Link>
+          <h1 className="mt-4 font-serif text-[40px] font-semibold leading-[1.08] md:text-[64px]">{article.title}</h1>
+          <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-muted md:text-xl">{article.summary}</p>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 text-xs text-muted">
+            <span>{article.isSample ? "AvenBrief Editorial Team" : `By ${article.author_name}`}</span><span aria-hidden="true">•</span>
+            <time dateTime={article.published_at ?? undefined}>{published}</time><span aria-hidden="true">•</span><span>5 min read</span>
           </div>
-        )}
+        </header>
 
-        <div className="mx-auto mt-10 max-w-3xl space-y-6 text-lg leading-8">
-          {article.paragraphs.map((paragraph, index) => (
-            <p key={index} className="whitespace-pre-wrap wrap-break-word">{paragraph}</p>
-          ))}
+        <div className="relative mt-9 aspect-[16/9] overflow-hidden rounded-[10px] md:mt-12 md:aspect-[16/7.8]">
+          <Image src={imageSrc} alt={article.imageAlt || article.title} fill sizes="(min-width: 1280px) 1312px, 100vw" className="object-cover" priority />
+        </div>
 
-          {article.source_url && (
-            <p className="border-t border-border pt-6 text-sm">
-              Source:{" "}
-              <a href={article.source_url} rel="noopener noreferrer"
-                className="break-all text-brand hover:underline">
-                {article.source_url}
-              </a>
-            </p>
-          )}
+        <div className="mx-auto mt-10 grid max-w-[1060px] gap-10 md:grid-cols-[72px_minmax(0,680px)_220px] md:items-start">
+          <aside aria-label="Article actions" className="flex gap-3 md:sticky md:top-5 md:flex-col">
+            <button type="button" aria-label="Share article" className="grid h-11 w-11 place-items-center rounded-full border border-border hover:bg-soft"><Image src="/figma/share.svg" alt="" width={18} height={18} /></button>
+            <button type="button" aria-label="Bookmark article" className="grid h-11 w-11 place-items-center rounded-full border border-border hover:bg-soft"><Image src="/figma/bookmark.svg" alt="" width={18} height={18} /></button>
+          </aside>
+
+          <div className="space-y-6 text-[17px] leading-8 text-ink">
+            {article.paragraphs.map((paragraph, index) => (
+              <p key={index} className={index === 0 ? "first-letter:float-left first-letter:mr-2 first-letter:font-serif first-letter:text-6xl first-letter:leading-[0.85]" : "whitespace-pre-wrap wrap-break-word"}>{paragraph}</p>
+            ))}
+            {article.source_url && <p className="border-t border-border pt-6 text-sm text-muted">Original source: <a href={article.source_url} rel="noopener noreferrer" className="break-all text-brand hover:underline">{article.source_url}</a></p>}
+          </div>
+
+          <aside className="rounded-[10px] bg-soft p-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand">In brief</p>
+            <p className="mt-3 text-sm leading-6 text-muted">Clear reporting, useful context, and links back to original sources.</p>
+            <Link href="/editorial-policy" className="mt-4 inline-block text-sm font-medium text-brand hover:underline">Our editorial approach →</Link>
+          </aside>
         </div>
       </article>
+
+      <section className="mt-16 border-t border-border pt-8" aria-labelledby="keep-reading">
+        <h2 id="keep-reading" className="font-serif text-[32px] font-semibold">Keep reading</h2>
+        <div className="mt-7 grid gap-8 md:grid-cols-3 md:gap-6">
+          {samples.slice(0, 3).map((story, index) => <NewsCard key={story.slug} {...story} imageSrc={["/figma/coast.png", "/figma/energy.png", "/figma/work.png"][index]} />)}
+        </div>
+      </section>
     </main>
   );
 }
 
 export default function ArticlePage(props: ArticlePageProps) {
-  return (
-    <div className="min-h-screen bg-white text-ink">
-      <SiteHeader />
-      <Suspense fallback={<p className="px-6 py-10 text-muted">Loading article…</p>}>
-        <ArticleContent {...props} />
-      </Suspense>
-    </div>
-  );
+  return <div className="min-h-screen bg-white text-ink"><SiteHeader /><Suspense fallback={<p className="px-6 py-10 text-muted">Loading article…</p>}><ArticleContent {...props} /></Suspense></div>;
 }

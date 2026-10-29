@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { connection } from "next/server";
 import SubmitButton from "@/components/submit-button";
+import AdminShell from "@/components/admin-shell";
 import { requireAdmin } from "@/lib/auth";
 import { categories } from "@/lib/categories";
 import { getAdminSupabase } from "@/lib/supabase-admin";
@@ -37,7 +38,7 @@ function formatTimestamp(value: string | null) {
 
 async function SourcesContent({ searchParams }: SourcesPageProps) {
   await connection();
-  await requireAdmin();
+  const { user } = await requireAdmin();
   const params = await searchParams;
   const supabase = getAdminSupabase();
 
@@ -102,14 +103,15 @@ async function SourcesContent({ searchParams }: SourcesPageProps) {
   );
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-12">
+    <AdminShell current="/admin/sources" email={user.email}>
+    <main className="mx-auto max-w-[1120px] px-6 py-8 md:px-10 md:py-10">
       <Link href="/admin" className="text-sm text-brand hover:underline">
         ← Admin dashboard
       </Link>
 
       <div className="mt-5 flex flex-wrap items-end justify-between gap-5">
         <div>
-          <h1 className="font-serif text-4xl font-semibold">RSS sources</h1>
+          <h1 className="font-serif text-4xl font-semibold">News sources</h1>
           <p className="mt-3 max-w-2xl text-muted">
             Approve publisher feeds, choose their fallback categories, and pause
             individual imports without removing history.
@@ -406,6 +408,7 @@ async function SourcesContent({ searchParams }: SourcesPageProps) {
         )}
       </section>
     </main>
+    </AdminShell>
   );
 }
 

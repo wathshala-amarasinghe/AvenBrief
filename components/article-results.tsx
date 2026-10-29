@@ -10,10 +10,12 @@ type ResultsProps = {
   query?: string;
   page: number;
   basePath: string;
+  variant?: "grid" | "list";
+  showHeading?: boolean;
 };
 
 export default async function ArticleResults({
-  category, query = "", page, basePath,
+  category, query = "", page, basePath, variant = "grid", showHeading = true,
 }: ResultsProps) {
   let result: PublishedArticlePage;
   try {
@@ -32,11 +34,11 @@ export default async function ArticleResults({
   }
 
   return (
-    <section aria-labelledby="results-heading" className="py-10">
-      <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
-        <h2 id="results-heading" className="font-serif text-3xl font-semibold">
+    <section aria-labelledby="results-heading" className="py-8 md:py-10">
+      <div className="mb-7 flex flex-wrap items-center justify-between gap-4">
+        {showHeading && <h2 id="results-heading" className="font-serif text-3xl font-semibold">
           {category ? "Latest stories" : query ? "Search results" : "Published stories"}
-        </h2>
+        </h2>}
         <p role="status" className="text-sm text-muted">
           {result.count} {result.count === 1 ? "story" : "stories"}
           {query && <> found for “{query}”</>}
@@ -44,9 +46,9 @@ export default async function ArticleResults({
       </div>
 
       {result.articles.length ? (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className={variant === "list" ? "divide-y divide-border" : "grid gap-8 md:grid-cols-2 lg:grid-cols-3 lg:gap-6"}>
           {result.articles.map((article) => (
-            <PublishedArticleCard key={article.id} article={article} />
+            <PublishedArticleCard key={article.id} article={article} variant={variant} />
           ))}
         </div>
       ) : (

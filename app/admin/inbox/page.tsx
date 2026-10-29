@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { connection } from "next/server";
 import SubmitButton from "@/components/submit-button";
+import AdminShell from "@/components/admin-shell";
 import { requireAdmin } from "@/lib/auth";
 import { categories } from "@/lib/categories";
 import { suggestRssCategory } from "@/lib/rss-category.mjs";
@@ -30,7 +31,7 @@ type InboxPageProps = {
 async function InboxContent({ searchParams }: InboxPageProps) {
   await connection();
 
-  await requireAdmin();
+  const { user } = await requireAdmin();
   const supabase = getAdminSupabase();
   const params = await searchParams;
   const reviewed = params.view === "reviewed";
@@ -90,7 +91,8 @@ async function InboxContent({ searchParams }: InboxPageProps) {
                 : "";
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-12">
+    <AdminShell current="/admin/inbox" email={user.email}>
+    <main className="mx-auto max-w-280 px-6 py-8 md:px-10 md:py-10">
       <Link
         href="/admin"
         className="text-sm text-brand hover:underline"
@@ -101,7 +103,7 @@ async function InboxContent({ searchParams }: InboxPageProps) {
       <div className="mt-5 flex flex-wrap items-center justify-between gap-5">
         <div>
           <h1 className="font-serif text-4xl font-semibold">
-            RSS review inbox
+            Review queue
           </h1>
           <p className="mt-3 text-muted">
             Review source stories before writing your articles.
@@ -318,6 +320,7 @@ async function InboxContent({ searchParams }: InboxPageProps) {
         )}
       </section>
     </main>
+    </AdminShell>
   );
 }
 

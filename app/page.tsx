@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+import PublishedStories from "@/components/published-stories";
 import SiteHeader from "@/components/site-header";
 import NewsCard from "@/components/news-card";
 import FeaturedNews from "@/components/featured-news";
@@ -19,11 +21,15 @@ export default function Home() {
           The world, made clear.
         </div>
 
+        <Suspense fallback={<p className="py-8 text-muted">Loading published stories…</p>}>
+          <PublishedStories />
+        </Suspense>
+
         <FeaturedNews />
 
         <section id="latest" className="border-t border-border py-10">
           <h2 className="mb-8 font-serif text-3xl font-bold">
-            The latest
+            Sample stories
           </h2>
 
           <div className="grid gap-6 md:grid-cols-3">

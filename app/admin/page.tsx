@@ -35,6 +35,10 @@ async function AdminDashboard() {
           </p>
         </div>
 
+        <div className="flex flex-wrap items-center gap-4">
+          <Link href="/admin/editor" className="rounded-xl bg-brand px-5 py-3 font-medium text-white hover:bg-blue-700">
+            New article
+          </Link>
         <form action={signOut}>
           <button
             type="submit"
@@ -43,6 +47,7 @@ async function AdminDashboard() {
             Sign out
           </button>
         </form>
+        </div>
       </div>
 
       <section className="mt-10 space-y-4">
@@ -57,7 +62,9 @@ async function AdminDashboard() {
               className="flex items-center justify-between gap-4 rounded-xl border border-border p-5"
             >
               <h2 className="font-serif text-xl font-semibold">
-                {article.title}
+                <Link href={"/admin/editor?id=" + article.id} className="hover:text-brand">
+                  {article.title}
+                </Link>
               </h2>
               <span className="rounded-full bg-soft px-3 py-1 text-sm text-brand">
                 {article.status}

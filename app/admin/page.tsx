@@ -2,107 +2,47 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
 import { connection } from "next/server";
+import AdminShell from "@/components/admin-shell";
 import { requireAdmin } from "@/lib/auth";
-import { signOut } from "@/app/login/actions";
 
-export const metadata: Metadata = {
-  title: "Admin Dashboard | AvenBrief",
-  robots: { index: false, follow: false },
-};
+export const metadata: Metadata = { title: "Admin Dashboard | AvenBrief", robots: { index: false, follow: false } };
 
 async function AdminDashboard() {
   await connection();
   const { supabase, user } = await requireAdmin();
-
-  const { data: articles, error } = await supabase
-    .from("articles")
-    .select("id, title, status")
-    .order("created_at", { ascending: false })
-    .limit(50);
+  const [articleResult, reviewResult, sourceResult] = await Promise.all([
+    supabase.from("articles").select("id, title, status, category, created_at").order("created_at", { ascending: false }).limit(8),
+    supabase.from("rss_inbox").select("id", { count: "exact", head: true }).eq("status", "new"),
+    supabase.from("rss_sources").select("id", { count: "exact", head: true }).eq("enabled", true),
+  ]);
+  const articles = articleResult.data ?? [];
+  const published = articles.filter((article) => article.status === "published").length;
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-12">
-      <div className="flex flex-wrap items-center justify-between gap-5">
-        <div>
-          <Link href="/" className="text-sm text-brand hover:underline">
-            ← View website
-          </Link>
-          <h1 className="mt-4 font-serif text-4xl font-semibold">
-            Your articles
-          </h1>
-          <p className="mt-3 text-sm text-muted">
-            Signed in as {user.email}
-          </p>
+    <AdminShell current="/admin" email={user.email}>
+      <main className="mx-auto max-w-295 px-6 py-8 md:px-10 md:py-10">
+        <div className="flex flex-wrap items-end justify-between gap-5">
+          <div><p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand">AvenBrief newsroom</p><h1 className="mt-2 font-serif text-[38px] font-semibold">Overview</h1><p className="mt-2 text-sm text-muted">A clear view of what needs your attention today.</p></div>
+          <Link href="/admin/editor" className="rounded-lg bg-brand px-5 py-3 text-sm font-medium text-white hover:bg-blue-700">New article</Link>
         </div>
 
-        <div className="flex flex-wrap items-center gap-4">
-          <Link
-            href="/admin/sources"
-            className="rounded-xl border border-border px-5 py-3 hover:bg-soft"
-          >
-            RSS sources
-          </Link>
-          <Link
-            href="/admin/inbox"
-            className="rounded-xl border border-border px-5 py-3 hover:bg-soft"
-          >
-            RSS inbox
-          </Link>
-          <Link href="/admin/editor" className="rounded-xl bg-brand px-5 py-3 font-medium text-white hover:bg-blue-700">
-            New article
-          </Link>
-        <form action={signOut}>
-          <button
-            type="submit"
-            className="rounded-xl border border-border px-5 py-3 hover:bg-soft"
-          >
-            Sign out
-          </button>
-        </form>
-        </div>
-      </div>
+        <section className="mt-8 grid gap-4 sm:grid-cols-3" aria-label="Newsroom metrics">
+          {[{ label: "Recent articles", value: articles.length, note: `${published} published` }, { label: "Awaiting review", value: reviewResult.count ?? 0, note: "From approved feeds" }, { label: "Active sources", value: sourceResult.count ?? 0, note: "Scheduled for import" }].map((metric) => (
+            <article key={metric.label} className="rounded-[10px] border border-border bg-white p-5"><p className="text-sm text-muted">{metric.label}</p><p className="mt-3 font-serif text-[36px] font-semibold">{metric.value}</p><p className="mt-1 text-xs text-muted">{metric.note}</p></article>
+          ))}
+        </section>
 
-      <section className="mt-10 space-y-4">
-        {error ? (
-          <p role="alert" className="rounded-xl bg-red-50 p-5 text-red-700">
-            Could not load articles. Please try again.
-          </p>
-        ) : articles?.length ? (
-          articles.map((article) => (
-            <article
-              key={article.id}
-              className="flex items-center justify-between gap-4 rounded-xl border border-border p-5"
-            >
-              <h2 className="font-serif text-xl font-semibold">
-                <Link href={"/admin/editor?id=" + article.id} className="hover:text-brand">
-                  {article.title}
-                </Link>
-              </h2>
-              <span className="rounded-full bg-soft px-3 py-1 text-sm text-brand">
-                {article.status}
-              </span>
-            </article>
-          ))
-        ) : (
-          <p className="rounded-xl bg-soft p-6 text-muted">
-            You have no articles yet.
-          </p>
-        )}
-      </section>
-    </main>
+        <section className="mt-8 rounded-[10px] border border-border bg-white">
+          <div className="flex items-center justify-between border-b border-border px-5 py-4"><h2 className="font-serif text-2xl font-semibold">Recent articles</h2><Link href="/admin/editor" className="text-sm text-brand hover:underline">View editor →</Link></div>
+          {articleResult.error ? <p role="alert" className="p-6 text-red-700">Could not load articles. Please try again.</p> : articles.length ? (
+            <div className="divide-y divide-border">{articles.map((article) => <article key={article.id} className="grid items-center gap-3 px-5 py-4 sm:grid-cols-[1fr_120px_90px]"><div><Link href={`/admin/editor?id=${article.id}`} className="font-medium hover:text-brand">{article.title}</Link><p className="mt-1 text-xs text-muted">{article.category}</p></div><span className="text-xs text-muted">{new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(new Date(article.created_at))}</span><span className={`w-fit rounded-full px-2.5 py-1 text-xs font-medium ${article.status === "published" ? "bg-green-50 text-green-700" : "bg-soft text-muted"}`}>{article.status}</span></article>)}</div>
+          ) : <p className="p-6 text-muted">You have no articles yet.</p>}
+        </section>
+      </main>
+    </AdminShell>
   );
 }
 
 export default function AdminPage() {
-  return (
-    <Suspense
-      fallback={
-        <p className="px-6 py-12 text-muted">
-          Checking admin access…
-        </p>
-      }
-    >
-      <AdminDashboard />
-    </Suspense>
-  );
+  return <Suspense fallback={<p className="px-6 py-12 text-muted">Checking admin access…</p>}><AdminDashboard /></Suspense>;
 }

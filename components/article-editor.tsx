@@ -6,7 +6,7 @@ import { saveArticle } from "@/app/admin/editor/actions";
 import { categories } from "@/lib/categories";
 import type { ArticleRecord } from "@/lib/article-types";
 
-const inputClass = "w-full rounded-xl border border-border bg-white px-4 py-3 text-ink";
+const inputClass = "w-full rounded-[8px] border border-border bg-white px-4 py-3 text-ink outline-none focus:border-brand focus:ring-1 focus:ring-brand";
 const inputFields = [
   { name: "title", label: "Title", maxLength: 180, type: "text" },
   { name: "slug", label: "URL name", maxLength: 100, type: "text" },
@@ -31,7 +31,7 @@ export default function ArticleEditor({ article }: { article: ArticleRecord | nu
   }
 
   return (
-    <form action={formAction} className="mt-8 space-y-6">
+    <form action={formAction} className="space-y-6">
       <input type="hidden" name="id" value={article?.id ?? ""} />
 
       {state.error && (

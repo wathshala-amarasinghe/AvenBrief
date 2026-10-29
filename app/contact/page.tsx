@@ -1,107 +1,45 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
-import TrustPage, { TrustSection } from "@/components/trust-page";
+import SiteHeader from "@/components/site-header";
+import ContactForm from "@/components/contact-form";
 
-export const metadata: Metadata = {
-  title: "Contact AvenBrief",
-  description:
-    "Contact AvenBrief with editorial feedback, correction requests, source concerns or general questions.",
-};
-
-const repositoryUrl = "https://github.com/wathshala-amarasinghe/AvenBrief";
+export const metadata: Metadata = { title: "Contact AvenBrief", description: "Contact AvenBrief with editorial feedback, correction requests, source concerns, or general questions." };
 
 export default function ContactPage() {
   const contactEmail = process.env.NEXT_PUBLIC_CONTACT_EMAIL?.trim();
-
   return (
-    <TrustPage
-      currentPath="/contact"
-      eyebrow="Contact"
-      title="Talk to AvenBrief."
-      intro="Reader questions and careful feedback help us make our work clearer, more accurate and more useful."
-      updated="We review messages as soon as practical."
-    >
-      <section className="grid max-w-3xl gap-5 sm:grid-cols-2">
-        <div className="rounded-xl border border-border p-6">
-          <h2 className="font-serif text-2xl font-semibold">
-            Corrections and accuracy
-          </h2>
-          <p className="mt-3 leading-7 text-muted">
-            Tell us which article is affected, what appears incorrect and any
-            reliable evidence that can help us review it.
-          </p>
-          <Link
-            href="/corrections-policy"
-            className="mt-5 inline-block font-medium text-brand hover:underline"
-          >
-            Read our corrections process →
-          </Link>
+    <div className="min-h-screen bg-white text-ink">
+      <SiteHeader />
+      <main className="mx-auto max-w-[1312px] px-6 pb-16 pt-10 md:px-8 md:pt-14 xl:px-0">
+        <header className="max-w-2xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand">Contact</p>
+          <h1 className="mt-4 font-serif text-[48px] font-semibold leading-tight md:text-[64px]">Let’s talk.</h1>
+          <p className="mt-5 text-lg leading-8 text-muted">Questions, careful feedback, and correction requests help us make AvenBrief clearer and more useful.</p>
+        </header>
+
+        <div className="mt-12 grid gap-12 border-t border-border pt-10 md:grid-cols-[0.7fr_1.3fr] md:gap-20">
+          <aside className="space-y-8">
+            <div>
+              <span className="grid h-11 w-11 place-items-center rounded-full bg-soft"><Image src="/figma/mail.svg" alt="" width={20} height={20} /></span>
+              <h2 className="mt-5 font-serif text-2xl font-semibold">Editorial and general</h2>
+              <p className="mt-3 text-sm leading-6 text-muted">Tell us which page is involved and include reliable supporting sources when possible.</p>
+              {contactEmail && <a href={`mailto:${contactEmail}`} className="mt-3 inline-block text-sm text-brand hover:underline">{contactEmail}</a>}
+            </div>
+            <div className="border-t border-border pt-7">
+              <h2 className="font-serif text-2xl font-semibold">Corrections</h2>
+              <p className="mt-3 text-sm leading-6 text-muted">Read how we assess, document, and correct material errors.</p>
+              <Link href="/corrections-policy" className="mt-3 inline-block text-sm text-brand hover:underline">Corrections policy →</Link>
+            </div>
+          </aside>
+
+          <section className="rounded-[10px] bg-soft p-6 md:p-8" aria-labelledby="send-message">
+            <h2 id="send-message" className="font-serif text-[32px] font-semibold">Send a message</h2>
+            <p className="mt-2 text-sm leading-6 text-muted">This form opens your email app; it does not transmit information through the website.</p>
+            <div className="mt-7"><ContactForm email={contactEmail} /></div>
+          </section>
         </div>
-
-        <div className="rounded-xl border border-border p-6">
-          <h2 className="font-serif text-2xl font-semibold">
-            Sources and rights
-          </h2>
-          <p className="mt-3 leading-7 text-muted">
-            Contact us about attribution, a source link, image rights or a
-            concern involving material associated with your work.
-          </p>
-        </div>
-
-        <div className="rounded-xl border border-border p-6 sm:col-span-2">
-          <h2 className="font-serif text-2xl font-semibold">
-            General questions
-          </h2>
-          <p className="mt-3 leading-7 text-muted">
-            We also welcome questions about AvenBrief, its editorial approach
-            and potential collaboration.
-          </p>
-        </div>
-      </section>
-
-      <TrustSection title="How to reach us">
-        {contactEmail ? (
-          <p>
-            Email us at{" "}
-            <a
-              href={`mailto:${contactEmail}`}
-              className="font-semibold text-brand hover:underline"
-            >
-              {contactEmail}
-            </a>
-            . For a correction request, please include the article URL and a
-            concise description of the concern.
-          </p>
-        ) : (
-          <p>
-            A public contact email is currently being configured. In the
-            meantime, you can reach the project through the{" "}
-            <a
-              href={repositoryUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="font-semibold text-brand hover:underline"
-            >
-              AvenBrief project repository
-            </a>
-            . Please avoid posting private or sensitive information in a public
-            issue.
-          </p>
-        )}
-      </TrustSection>
-
-      <TrustSection title="What to include">
-        <ul className="list-disc space-y-2 pl-6">
-          <li>The page or article URL, when your message concerns content.</li>
-          <li>A clear explanation of the question or requested change.</li>
-          <li>Links to primary documents or other reliable supporting sources.</li>
-          <li>A safe way to follow up if more detail is needed.</li>
-        </ul>
-        <p>
-          Please do not send passwords, financial details, identity documents
-          or other highly sensitive personal information.
-        </p>
-      </TrustSection>
-    </TrustPage>
+      </main>
+    </div>
   );
 }

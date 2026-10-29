@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { categories } from "@/lib/categories";
 
@@ -7,8 +8,15 @@ export default function SiteFooter() {
       <div className="mx-auto max-w-7xl px-6 py-10">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr]">
           <div className="sm:col-span-2 lg:col-span-1">
-            <Link href="/" className="font-serif text-3xl font-semibold">
-              AvenBrief
+            <Link href="/" aria-label="AvenBrief home" className="inline-block">
+              <Image
+                src="/avenbrief-logo.png"
+                alt="AvenBrief"
+                width={2172}
+                height={724}
+                sizes="160px"
+                className="h-auto w-40"
+              />
             </Link>
             <p className="mt-3 text-sm text-muted">
               The world, made clear.

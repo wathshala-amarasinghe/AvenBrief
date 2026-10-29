@@ -4,6 +4,7 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { notFound } from "next/navigation";
 import ArticleEditor from "@/components/article-editor";
+import AdminShell from "@/components/admin-shell";
 import { requireAdmin } from "@/lib/auth";
 import { isArticleId } from "@/lib/article-validation.mjs";
 import type { ArticleRecord } from "@/lib/article-types";
@@ -19,7 +20,7 @@ type EditorPageProps = {
 
 async function EditorContent({ searchParams }: EditorPageProps) {
   await connection();
-  const { supabase } = await requireAdmin();
+  const { supabase, user } = await requireAdmin();
   const params = await searchParams;
   const id = params.id;
 
@@ -43,13 +44,13 @@ async function EditorContent({ searchParams }: EditorPageProps) {
   const saved = article && params.saved === article.status;
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-12">
-      <Link href="/admin" className="text-sm text-brand hover:underline">
-        ← Your articles
-      </Link>
-      <h1 className="mt-5 font-serif text-4xl font-semibold">
-        {article ? "Edit article" : "New article"}
-      </h1>
+    <AdminShell current="/admin/editor" email={user.email}>
+    <main className="mx-auto max-w-[980px] px-6 py-8 md:px-10 md:py-10">
+      <Link href="/admin" className="text-sm text-muted hover:text-brand">← Overview</Link>
+      <div className="mt-5 flex flex-wrap items-end justify-between gap-4">
+        <div><p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand">Articles</p><h1 className="mt-2 font-serif text-[38px] font-semibold">{article ? "Review & edit" : "New article"}</h1></div>
+        {article?.status === "published" && <Link href={`/news/${article.slug}`} className="text-sm text-brand hover:underline">View published article →</Link>}
+      </div>
 
       {saved && article && (
         <p role="status" className="mt-6 rounded-xl bg-soft p-4 text-brand">
@@ -57,14 +58,9 @@ async function EditorContent({ searchParams }: EditorPageProps) {
         </p>
       )}
 
-      {article?.status === "published" && (
-        <Link href={"/news/" + article.slug} className="mt-5 inline-block text-brand hover:underline">
-          View published article →
-        </Link>
-      )}
-
-      <ArticleEditor key={article?.id ?? "new"} article={article} />
+      <div className="mt-7 rounded-[10px] border border-border bg-white p-6 md:p-8"><ArticleEditor key={article?.id ?? "new"} article={article} /></div>
     </main>
+    </AdminShell>
   );
 }
 

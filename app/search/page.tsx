@@ -25,7 +25,7 @@ async function SearchContent({ searchParams }: SearchPageProps) {
     <>
       <NewsSearch query={query} />
       <Suspense key={query + ":" + page} fallback={<p className="py-10 text-muted">Searching stories…</p>}>
-        <ArticleResults query={query} page={page} basePath="/search" />
+        <ArticleResults query={query} page={page} basePath="/search" variant="list" />
       </Suspense>
     </>
   );
@@ -35,11 +35,11 @@ export default function SearchPage(props: SearchPageProps) {
   return (
     <div className="min-h-screen bg-white text-ink">
       <SiteHeader />
-      <main className="mx-auto max-w-7xl px-6 py-10">
+      <main className="mx-auto max-w-[1312px] px-6 pb-12 pt-8 md:px-8 md:pt-12 xl:px-0">
         <div className="border-b border-border pb-8">
-          <p className="text-sm font-semibold uppercase tracking-wider text-brand">Explore AvenBrief</p>
-          <h1 className="mt-4 font-serif text-5xl font-semibold">Find your next story.</h1>
-          <p className="mt-5 text-lg text-muted">Search published AvenBrief articles.</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand">Explore AvenBrief</p>
+          <h1 className="mt-4 font-serif text-[44px] font-semibold leading-tight md:text-[56px]">Search the world.</h1>
+          <p className="mt-3 text-base text-muted">Find stories by topic, place, category, or keyword.</p>
         </div>
         <Suspense fallback={<p className="py-10 text-muted">Opening search…</p>}>
           <SearchContent {...props} />

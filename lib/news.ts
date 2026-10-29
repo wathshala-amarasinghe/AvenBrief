@@ -4,8 +4,8 @@ export const articles = [
     category: "World",
     title: "Cities rethink the spaces we share",
     summary:
-      "Explore the ideas reshaping neighbourhoods and everyday urban life.",
-    imageSrc: "/images/city.jpg",
+      "From greener streets to better connections, a closer look at the ideas reshaping urban life.",
+    imageSrc: "/figma/city.png",
     imageAlt: "City skyline and urban transport",
     paragraphs: [
       "The places we share influence how we experience a city. Streets, parks and public transport connect people with work, education and their communities.",
@@ -19,7 +19,7 @@ export const articles = [
     title: "A smarter commute starts with better connections",
     summary:
       "Discover the transport ideas helping cities move more efficiently.",
-    imageSrc: "/images/tram.jpg",
+    imageSrc: "/figma/tram.png",
     imageAlt: "A tram travelling along a tree-lined city street",
     paragraphs: [
       "A reliable journey can bring jobs, schools and public spaces within reach. Better connections help people choose how they travel.",
@@ -30,10 +30,10 @@ export const articles = [
   {
     slug: "the-next-chapter-in-clean-energy",
     category: "Climate",
-    title: "The next chapter in clean energy",
+    title: "The next chapter in the clean energy transition",
     summary:
       "A closer look at how communities are planning for the future.",
-    imageSrc: "/images/energy.jpg",
+    imageSrc: "/figma/energy.png",
     imageAlt: "Wind turbines beneath a blue sky",
     paragraphs: [
       "Energy connects everyday decisions with wider questions about communities, infrastructure and the environment.",

@@ -10,6 +10,7 @@
   --color-surface: #ffffff;
   --color-soft: #f1f6fd;
   --color-border: #e6edf5;
+  --color-success: #16794f;
 }
 
 :root {
@@ -20,6 +21,20 @@ body {
   margin: 0;
   background: #ffffff;
   color: #17263c;
+}
+
+body:has(.admin-shell),
+body:has(.admin-login) {
+  background: #ffffff;
+}
+
+body:has(.admin-shell) > footer,
+body:has(.admin-login) > footer {
+  display: none;
+}
+
+summary::-webkit-details-marker {
+  display: none;
 }
 
 ::selection {

@@ -3,23 +3,19 @@ import Link from "next/link";
 import { articles } from "@/lib/news";
 
 export default function FeaturedNews() {
-  const [featured, ...otherArticles] = articles;
+  const [featured] = articles;
 
   if (!featured) return null;
 
   return (
-    <section className="py-10">
-      <h1 className="mb-8 font-serif text-4xl font-semibold md:text-6xl">
-        The world, in focus.
-      </h1>
-
-      <div className="grid gap-8 lg:grid-cols-[2fr_1fr]">
+    <section>
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
         <article>
           <Link
             href={`/news/${featured.slug}`}
             className="group block"
           >
-            <div className="relative aspect-video overflow-hidden rounded-xl">
+            <div className="relative aspect-342/238 overflow-hidden rounded-[10px] lg:aspect-856/365">
               <Image
                 src={featured.imageSrc}
                 alt={featured.imageAlt}
@@ -30,32 +26,49 @@ export default function FeaturedNews() {
               />
             </div>
 
-            <p className="mt-6 text-xs font-semibold uppercase tracking-wider text-brand">
+            <p className="mt-4 inline-flex rounded-[10px] bg-soft px-2 py-1 text-xs uppercase text-brand">
               {featured.category}
             </p>
 
-            <h2 className="mt-3 font-serif text-3xl font-semibold group-hover:text-brand md:text-4xl">
+            <h2 className="mt-4 font-serif text-[32px] font-semibold leading-tight group-hover:text-brand lg:text-5xl lg:leading-[1.16]">
               {featured.title}
             </h2>
 
-            <p className="mt-4 text-lg leading-8 text-muted">
+            <p className="mt-4 text-base leading-6 text-muted">
               {featured.summary}
             </p>
 
-            <p className="mt-5 text-xs text-muted">
-              Sample story · Development preview
+            <p className="mt-4 text-xs text-muted">
+              News desk · 8 min ago · 5 min read
             </p>
           </Link>
         </article>
 
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-1">
-          {otherArticles.slice(0, 2).map((article) => (
-            <article key={article.slug}>
+        <div className="hidden gap-6 lg:grid">
+          {[
+            {
+              slug: "the-next-chapter-in-clean-energy",
+              category: "Climate",
+              title: "The next chapter in the clean energy transition",
+              imageSrc: "/figma/energy.png",
+              imageAlt: "Wind turbines in a mountain landscape",
+              metadata: "Climate desk · 12 min ago",
+            },
+            {
+              slug: "search?q=work",
+              category: "Finance",
+              title: "Inside the changing world of work",
+              imageSrc: "/figma/work.png",
+              imageAlt: "A laptop and coffee on a desk",
+              metadata: "Finance desk · 18 min ago",
+            },
+          ].map((article) => (
+            <article key={article.title}>
               <Link
-                href={`/news/${article.slug}`}
+                href={article.slug.startsWith("search") ? `/${article.slug}` : `/news/${article.slug}`}
                 className="group block"
               >
-                <div className="relative aspect-16/8 overflow-hidden rounded-xl">
+                <div className="relative h-39.5 overflow-hidden rounded-[10px]">
                   <Image
                     src={article.imageSrc}
                     alt={article.imageAlt}
@@ -65,16 +78,16 @@ export default function FeaturedNews() {
                   />
                 </div>
 
-                <p className="mt-4 text-xs font-semibold uppercase tracking-wider text-brand">
+                <p className="mt-4 text-xs font-semibold uppercase text-brand">
                   {article.category}
                 </p>
 
-                <h2 className="mt-2 font-serif text-2xl font-semibold group-hover:text-brand">
+                <h2 className="mt-3 font-serif text-2xl font-semibold leading-[1.3] group-hover:text-brand">
                   {article.title}
                 </h2>
 
                 <p className="mt-3 text-xs text-muted">
-                  Sample story · Development preview
+                  {article.metadata}
                 </p>
               </Link>
             </article>

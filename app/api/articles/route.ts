@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { io } from "next/cache";
 import { getPublicSupabase } from "@/lib/supabase-public";
 
 const headers = {
@@ -6,6 +7,9 @@ const headers = {
 };
 
 export async function GET() {
+  // Do not let the error handler consume Next.js's prerender suspension.
+  await io();
+
   try {
     const supabase = getPublicSupabase();
 

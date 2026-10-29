@@ -72,6 +72,8 @@ export async function saveArticle(
   revalidatePath("/");
   revalidatePath("/news/" + data.slug);
   revalidatePath("/api/articles");
+  revalidatePath("/search");
+  revalidatePath("/category/[slug]", "page");
 
   redirect("/admin/editor?id=" + data.id + "&saved=" + status);
 }

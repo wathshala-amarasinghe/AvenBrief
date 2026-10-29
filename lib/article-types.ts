@@ -23,3 +23,10 @@ export type ArticlePreview = Pick<
   ArticleRecord,
   "id" | "slug" | "title" | "summary" | "category" | "author_name" | "published_at"
 >;
+
+export type PublishedArticlePage = {
+  articles: ArticlePreview[];
+  count: number;
+  page: number;
+  totalPages: number;
+};

@@ -21,7 +21,7 @@ export default function ArticleEditor({ article }: { article: ArticleRecord | nu
     slug: article?.slug ?? "",
     summary: article?.summary ?? "",
     body: article?.body ?? "",
-    category: article?.category ?? "World",
+    category: article?.category ?? "",
     author_name: article?.author_name ?? "",
     source_url: article?.source_url ?? "",
   });
@@ -73,10 +73,17 @@ export default function ArticleEditor({ article }: { article: ArticleRecord | nu
             name="category"
             value={values.category}
             onChange={(event) => change("category", event.target.value)}
+            required
             className={inputClass}
           >
+            <option value="" disabled>
+              Choose a category
+            </option>
+
             {categories.map((category) => (
-              <option key={category.slug} value={category.name}>{category.name}</option>
+              <option key={category.slug} value={category.name}>
+                {category.name}
+              </option>
             ))}
           </select>
         </div>

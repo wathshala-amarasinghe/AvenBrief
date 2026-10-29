@@ -29,8 +29,22 @@ URL names remain fixed after the first save, including for an existing database 
 
 Public reads use a separate anonymous Supabase client. Public data is fetched at request time behind Suspense; no shared cache stores a private draft or stale publication state. Server Actions verify admin identity again before each write. Public pages depend on the existing policy allowing only status = published with published_at <= now().
 
-The existing RSS page still links to external publishers. Search and category lists still use the original sample dataset; this change adds original articles to the homepage and their own public article pages.
+The existing RSS page still links to external publishers. The Latest homepage section, category lists and Search now read published articles from Supabase. Sample articles remain separately labelled on the homepage.
 
 ## Automated checks
 
-npm test runs the input validation tests with Node's built-in test runner. The Editor checks GitHub Actions workflow also runs lint and a production build without database credentials. Authenticated saves and RLS behavior require the manual checks above against your configured Supabase project.
+npm test runs article validation and browse-query tests with Node's built-in test runner. Browse tests use the real Supabase SDK with an intercepted fetch, without connecting to a database. The Editor checks GitHub Actions workflow also runs lint and a production build without database credentials. Authenticated saves and RLS behavior require the manual checks above against your configured Supabase project.
+
+## Categories and search
+
+- Open /category/technology after publishing a Technology article. It should appear there and remain absent from /category/world.
+- Search for a distinctive word in the title or summary, or for Technology. Submit with Enter or the Search button.
+- The URL stores the query as /search?q=your-query and pagination as &page=2, so links can be shared.
+- Clear search to return to all published articles. Changing the query starts again at page 1.
+- Lists show 12 stories per page with a total count and previous/next links when needed.
+- Search and category results include only publicly readable published articles. Saving an article as Draft removes it from these lists on the next request.
+- Move an article to a different category, republish, and verify that both category lists reflect the change.
+- A database error displays an unavailable message; a successful query with no matches displays a distinct empty state.
+- Confirm that quotes, commas, parentheses and Unicode search terms do not cause a query syntax error. Asterisks follow PostgREST's LIKE wildcard convention; percent and underscore are searched literally.
+
+No new database columns or policies are needed. A quoted OR filter searches title, summary and category while a separate status filter and the existing RLS policy continue to restrict public visibility.

@@ -4,7 +4,8 @@ import { cache } from "react";
 import { connection } from "next/server";
 import { getPublicSupabase } from "@/lib/supabase-public";
 import { articles as samples } from "@/lib/news";
-import type { ArticlePreview, ArticleRecord } from "@/lib/article-types";
+import type { ArticlePreview, ArticleRecord, PublishedArticlePage } from "@/lib/article-types";
+import { ARTICLE_PAGE_SIZE, createPublishedArticleQuery, normalisePage } from "@/lib/article-browse.mjs";
 
 type ReaderArticle = {
   title: string;
@@ -60,15 +61,30 @@ export const getReaderArticle = cache(async (slug: string): Promise<ReaderArticl
   };
 });
 
-export async function getPublishedArticles(): Promise<ArticlePreview[]> {
+export async function getPublishedArticlePage(
+  options: { query?: string; category?: string; page?: number } = {},
+): Promise<PublishedArticlePage> {
   await connection();
-  const { data, error } = await getPublicSupabase()
-    .from("articles")
-    .select("id, slug, title, summary, category, author_name, published_at")
-    .eq("status", "published")
-    .order("published_at", { ascending: false })
-    .limit(12);
+  const page = normalisePage(options.page);
+  const { data, error, count } = await createPublishedArticleQuery(
+    getPublicSupabase(),
+    { ...options, page },
+  );
 
-  if (error) throw new Error("Could not load published articles.");
-  return (data ?? []) as ArticlePreview[];
+  if (error) {
+    console.error("Published article query failed:", error);
+    throw new Error("Could not load published articles.");
+  }
+
+  const total = count ?? 0;
+  return {
+    articles: (data ?? []) as ArticlePreview[],
+    count: total,
+    page,
+    totalPages: Math.max(1, Math.ceil(total / ARTICLE_PAGE_SIZE)),
+  };
+}
+
+export async function getPublishedArticles(): Promise<ArticlePreview[]> {
+  return (await getPublishedArticlePage()).articles;
 }

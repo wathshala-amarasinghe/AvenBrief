@@ -21,13 +21,18 @@ export default function Home() {
           The world, made clear.
         </div>
 
-        <Suspense fallback={<p className="py-8 text-muted">Loading published stories…</p>}>
-          <PublishedStories />
-        </Suspense>
+        <section id="latest" aria-labelledby="latest-heading" className="scroll-mt-6 py-10">
+          <h2 id="latest-heading" className="mb-8 font-serif text-3xl font-semibold">
+            Latest from AvenBrief
+          </h2>
+          <Suspense fallback={<p className="py-8 text-muted">Loading published stories…</p>}>
+            <PublishedStories />
+          </Suspense>
+        </section>
 
         <FeaturedNews />
 
-        <section id="latest" className="border-t border-border py-10">
+        <section id="sample-stories" className="border-t border-border py-10">
           <h2 className="mb-8 font-serif text-3xl font-bold">
             Sample stories
           </h2>

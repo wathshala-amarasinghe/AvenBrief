@@ -2,12 +2,14 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import SiteHeader from "@/components/site-header";
 import { getHeadlines, type Headline } from "@/lib/rss";
+import { createPageMetadata } from "@/lib/site-metadata";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "Latest Headlines | AvenBrief",
   description:
     "Explore recent Global Voices headlines with links to the original reporting.",
-};
+  path: "/headlines",
+});
 
 async function HeadlinesList() {
   let headlines: Headline[];

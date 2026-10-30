@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Newsreader } from "next/font/google";
 import SiteFooter from "@/components/site-footer";
+import { siteUrl } from "@/lib/site-metadata";
 import "./globals.css";
 
 const inter = Inter({
@@ -16,9 +17,17 @@ const newsreader = Newsreader({
 });
 
 export const metadata: Metadata = {
+  metadataBase: siteUrl,
   title: "AvenBrief | World News & Global Updates",
   description:
     "Explore world news, business, technology, science and culture with clear summaries and useful context.",
+  applicationName: "AvenBrief",
+  authors: [{ name: "AvenBrief Editorial Team" }],
+  creator: "AvenBrief",
+  publisher: "AvenBrief",
+  category: "news",
+  referrer: "origin-when-cross-origin",
+  keywords: ["world news", "technology", "climate", "finance", "gaming", "global updates"],
 };
 
 export default function RootLayout({

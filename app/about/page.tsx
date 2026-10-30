@@ -2,11 +2,13 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import SiteHeader from "@/components/site-header";
+import { createPageMetadata } from "@/lib/site-metadata";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "About AvenBrief | The World, Made Clear",
   description: "AvenBrief brings readers clear news summaries, useful context, and links to original sources.",
-};
+  path: "/about",
+});
 
 const principles = [
   { icon: "/figma/check.svg", title: "Clarity first", text: "We explain complex stories in direct language, without losing the context that matters." },

@@ -5,11 +5,14 @@ import SiteHeader from "@/components/site-header";
 import NewsSearch from "@/components/news-search";
 import ArticleResults from "@/components/article-results";
 import { normalisePage, normaliseQuery } from "@/lib/article-browse.mjs";
+import { createPageMetadata } from "@/lib/site-metadata";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "Search | AvenBrief",
   description: "Search published AvenBrief stories about world news, technology, climate, finance and gaming.",
-};
+  path: "/search",
+  robots: { index: false, follow: true },
+});
 
 type SearchPageProps = {
   searchParams: Promise<{ q?: string | string[]; page?: string | string[] }>;

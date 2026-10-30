@@ -4,11 +4,13 @@ import HomeStories from "@/components/home-stories";
 import CurrentDate from "@/components/current-date";
 import SiteHeader from "@/components/site-header";
 import { categories } from "@/lib/categories";
+import { createPageMetadata } from "@/lib/site-metadata";
 
-export const metadata = {
+export const metadata = createPageMetadata({
   title: "AvenBrief | World News & Global Updates",
   description: "Explore world news, business, technology, climate, finance and gaming with clear context.",
-};
+  path: "/",
+});
 
 export default function Home() {
   return (

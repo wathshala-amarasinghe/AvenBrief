@@ -8,6 +8,7 @@ import PublishedArticleCard from "@/components/published-article-card";
 import SiteHeader from "@/components/site-header";
 import { getArticleImage } from "@/lib/article-images";
 import { getPublishedArticles, getReaderArticle } from "@/lib/published-articles";
+import { absoluteUrl } from "@/lib/site-metadata";
 
 type ArticlePageProps = { params: Promise<{ slug: string }> };
 export const instant = false;
@@ -16,7 +17,37 @@ export async function generateMetadata({ params }: ArticlePageProps): Promise<Me
   const { slug } = await params;
   const article = await getReaderArticle(slug);
   if (!article) notFound();
-  return { title: article.title + " | AvenBrief", description: article.summary };
+  const canonical = absoluteUrl(`/news/${article.slug}`);
+  const image = getArticleImage({
+    category: article.category,
+    featured_image_url: article.imageSrc,
+    image_alt: article.imageAlt,
+  });
+  const imageUrl = absoluteUrl(image.src);
+
+  return {
+    title: article.title + " | AvenBrief",
+    description: article.summary,
+    alternates: { canonical },
+    authors: [{ name: article.author_name }],
+    openGraph: {
+      type: "article",
+      url: canonical,
+      siteName: "AvenBrief",
+      title: article.title,
+      description: article.summary,
+      publishedTime: article.published_at ?? undefined,
+      authors: [article.author_name],
+      section: article.category,
+      images: [{ url: imageUrl, alt: image.alt || article.title }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: article.title,
+      description: article.summary,
+      images: [imageUrl],
+    },
+  };
 }
 
 async function ArticleContent({ params }: ArticlePageProps) {

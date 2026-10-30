@@ -16,11 +16,13 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --test tests/article-validation.test.mjs tests/article-browse.test.mjs tests/article-image-upload.test.mjs tests/rss-category.test.mjs tests/rss-source-validation.test.mjs"
+    "test": "node --test tests/article-validation.test.mjs tests/article-browse.test.mjs tests/article-image-upload.test.mjs tests/error-reporting.test.mjs tests/rss-category.test.mjs tests/rss-source-validation.test.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.118.0",
+    "@vercel/analytics": "^2.0.1",
+    "@vercel/speed-insights": "^2.0.0",
     "next": "16.4.3",
     "react": "19.3.0",
     "react-dom": "19.3.0",

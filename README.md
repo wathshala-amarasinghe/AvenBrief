@@ -39,3 +39,7 @@ Production deploys from the `main` branch to Vercel. `vercel.json` schedules the
 Set `NEXT_PUBLIC_SITE_URL` to the production origin, without a trailing path. It controls canonical URLs, the sitemap, robots metadata, and social-sharing links.
 
 See `docs/article-editor.md` and `docs/rss-inbox.md` for editorial workflow details.
+
+## Monitoring
+
+Enable **Web Analytics** and **Speed Insights** in the Vercel project after deployment. Public routes report anonymized traffic and Core Web Vitals; admin and login routes are excluded. Unhandled server errors are written as redacted structured records in Vercel Runtime Logs with the event name `request_error`.

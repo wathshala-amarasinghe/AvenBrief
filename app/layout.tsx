@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Newsreader } from "next/font/google";
+import Observability from "@/components/observability";
 import SiteFooter from "@/components/site-footer";
 import { siteUrl } from "@/lib/site-metadata";
 import "./globals.css";
@@ -41,6 +42,7 @@ export default function RootLayout({
       <body className="font-sans antialiased">
         {children}
         <SiteFooter />
+        <Observability />
       </body>
     </html>
   );

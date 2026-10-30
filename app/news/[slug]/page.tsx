@@ -12,6 +12,7 @@ import { getPublishedArticles, getReaderArticle } from "@/lib/published-articles
 import { absoluteUrl, feedUrl } from "@/lib/site-metadata";
 
 type ArticlePageProps = { params: Promise<{ slug: string }> };
+type ReaderArticle = NonNullable<Awaited<ReturnType<typeof getReaderArticle>>>;
 export const instant = false;
 
 export async function generateMetadata({ params }: ArticlePageProps): Promise<Metadata> {
@@ -54,10 +55,7 @@ export async function generateMetadata({ params }: ArticlePageProps): Promise<Me
   };
 }
 
-async function ArticleContent({ params }: ArticlePageProps) {
-  const { slug } = await params;
-  const article = await getReaderArticle(slug);
-  if (!article) notFound();
+async function ArticleContent({ article }: { article: ReaderArticle }) {
   const image = getArticleImage({
     category: article.category,
     featured_image_url: article.imageSrc,
@@ -114,6 +112,10 @@ async function ArticleContent({ params }: ArticlePageProps) {
   );
 }
 
-export default function ArticlePage(props: ArticlePageProps) {
-  return <div className="min-h-screen bg-white text-ink"><SiteHeader /><Suspense fallback={<p className="px-6 py-10 text-muted">Loading article…</p>}><ArticleContent {...props} /></Suspense></div>;
+export default async function ArticlePage({ params }: ArticlePageProps) {
+  const { slug } = await params;
+  const article = await getReaderArticle(slug);
+  if (!article) notFound();
+
+  return <div className="min-h-screen bg-white text-ink"><SiteHeader /><Suspense fallback={<p className="px-6 py-10 text-muted">Loading related stories…</p>}><ArticleContent article={article} /></Suspense></div>;
 }

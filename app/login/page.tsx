@@ -76,7 +76,7 @@ export default function LoginPage(props: LoginPageProps) {
         </div>
       </section>
       <section className="relative hidden min-h-screen overflow-hidden md:block">
-        <Image src="/figma/login-city.png" alt="City skyline at dusk" fill sizes="50vw" className="object-cover" priority />
+        <Image src="/figma/city.png" alt="City skyline at dusk" fill sizes="50vw" className="object-cover" priority />
         <div className="absolute inset-0 bg-linear-to-t from-ink/70 via-transparent to-transparent" />
         <blockquote className="absolute bottom-14 left-14 max-w-md text-white"><p className="font-serif text-3xl leading-tight">“Clear reporting starts with a careful editorial process.”</p><footer className="mt-4 text-sm text-white/80">AvenBrief Editorial Team</footer></blockquote>
       </section>

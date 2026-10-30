@@ -18,10 +18,8 @@ type ReaderArticle = {
   imageSrc: string | null;
   imageAlt: string;
   imageCredit: string;
-  isSample: boolean;
 };
 
-// Request-scoped deduplication only; never use an authenticated client for public reads.
 export const getReaderArticle = cache(async (slug: string): Promise<ReaderArticle | null> => {
   await connection();
   const { data, error } = await getPublicSupabase()
@@ -47,7 +45,6 @@ export const getReaderArticle = cache(async (slug: string): Promise<ReaderArticl
     imageSrc: article.featured_image_url ?? null,
     imageAlt: article.image_alt ?? "",
     imageCredit: article.image_credit ?? "",
-    isSample: false,
   };
 });
 

@@ -1,19 +1,16 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import ArticleActions from "@/components/article-actions";
+import EditorialImage from "@/components/editorial-image";
 import PublishedArticleCard from "@/components/published-article-card";
 import SiteHeader from "@/components/site-header";
+import { getArticleImage } from "@/lib/article-images";
 import { getPublishedArticles, getReaderArticle } from "@/lib/published-articles";
 
 type ArticlePageProps = { params: Promise<{ slug: string }> };
 export const instant = false;
-
-const categoryImages: Record<string, string> = {
-  World: "/figma/article-tram.png", Technology: "/figma/tram.png", Climate: "/figma/energy.png", Finance: "/figma/work.png", Gaming: "/figma/coast.png",
-};
 
 export async function generateMetadata({ params }: ArticlePageProps): Promise<Metadata> {
   const { slug } = await params;
@@ -26,7 +23,11 @@ async function ArticleContent({ params }: ArticlePageProps) {
   const { slug } = await params;
   const article = await getReaderArticle(slug);
   if (!article) notFound();
-  const imageSrc = article.imageSrc ?? categoryImages[article.category] ?? categoryImages.World;
+  const image = getArticleImage({
+    category: article.category,
+    featured_image_url: article.imageSrc,
+    image_alt: article.imageAlt,
+  });
   const published = article.published_at ? new Intl.DateTimeFormat("en", { dateStyle: "long", timeZone: "UTC" }).format(new Date(article.published_at)) : "Publication date pending";
   const related = (await getPublishedArticles()).filter((item) => item.slug !== article.slug).slice(0, 3);
 
@@ -40,10 +41,9 @@ async function ArticleContent({ params }: ArticlePageProps) {
           <div className="mt-6 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 text-xs text-muted"><span>By {article.author_name}</span><span aria-hidden="true">•</span><time dateTime={article.published_at ?? undefined}>{published}</time><span aria-hidden="true">•</span><span>{Math.max(1, Math.ceil(article.paragraphs.join(" ").split(/\s+/).length / 220))} min read</span></div>
         </header>
 
-        <div className="relative mt-9 aspect-[16/9] overflow-hidden rounded-[10px] md:mt-12 md:aspect-[16/7.8]">{imageSrc.startsWith("https://") ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={imageSrc} alt={article.imageAlt || article.title} className="h-full w-full object-cover" />
-        ) : <Image src={imageSrc} alt={article.imageAlt || article.title} fill sizes="(min-width: 1280px) 1312px, 100vw" className="object-cover" priority />}</div>
+        <div className="relative mt-9 aspect-[16/9] overflow-hidden rounded-[10px] md:mt-12 md:aspect-[16/7.8]">
+          <EditorialImage src={image.src} alt={image.alt || article.title} sizes="(min-width: 1280px) 1312px, 100vw" priority />
+        </div>
         {article.imageCredit && <p className="mt-2 text-right text-xs text-muted">Image: {article.imageCredit}</p>}
 
         <div className="mx-auto mt-10 grid max-w-[1060px] gap-10 md:grid-cols-[72px_minmax(0,680px)_220px] md:items-start">

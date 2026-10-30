@@ -1,7 +1,5 @@
 "use client";
 
-/* eslint-disable @next/next/no-img-element */
-
 import { useActionState, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { saveArticle } from "@/app/admin/editor/actions";

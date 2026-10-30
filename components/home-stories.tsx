@@ -1,6 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
 import { connection } from "next/server";
+import EditorialImage from "@/components/editorial-image";
 import PublishedArticleCard from "@/components/published-article-card";
 import { formatPublishedDate, getArticleImage } from "@/lib/article-images";
 import { getPublishedArticles } from "@/lib/published-articles";
@@ -34,10 +34,7 @@ export default async function HomeStories() {
       <section aria-labelledby="lead-story-heading">
         <Link href={`/news/${lead.slug}`} className="group grid gap-6 lg:grid-cols-[minmax(0,1.9fr)_minmax(300px,1fr)] lg:items-center lg:gap-10">
           <div className="relative aspect-[342/238] overflow-hidden rounded-[10px] lg:aspect-[856/480]">
-            {image.src.startsWith("https://") ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={image.src} alt={image.alt} className="h-full w-full object-cover" />
-            ) : <Image src={image.src} alt={image.alt} fill sizes="(min-width: 1024px) 66vw, 100vw" className="object-cover" priority />}
+            <EditorialImage src={image.src} alt={image.alt} sizes="(min-width: 1024px) 66vw, 100vw" priority />
           </div>
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand">{lead.category}</p>

@@ -16,7 +16,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --test tests/article-validation.test.mjs tests/article-browse.test.mjs tests/rss-category.test.mjs tests/rss-source-validation.test.mjs"
+    "test": "node --test tests/article-validation.test.mjs tests/article-browse.test.mjs tests/article-image-upload.test.mjs tests/rss-category.test.mjs tests/rss-source-validation.test.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

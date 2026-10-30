@@ -6,7 +6,7 @@ AvenBrief is a review-first news publication built with Next.js 16, Supabase, an
 
 1. Install dependencies with `npm ci`.
 2. Copy `.env.example` to `.env.local` and add the required values.
-3. Apply the SQL files in `supabase/migrations` in timestamp order.
+3. Apply the SQL files in `supabase/migrations` in timestamp order, including the article-image storage bucket migration.
 4. Start the application with `npm run dev`.
 
 The public site is available at `http://localhost:3000`. The protected admin area is available at `http://localhost:3000/admin`.

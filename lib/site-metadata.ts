@@ -15,6 +15,7 @@ function readSiteUrl() {
 }
 
 export const siteUrl = readSiteUrl();
+export const feedUrl = new URL("/feed.xml", siteUrl).toString();
 
 export function absoluteUrl(path: string) {
   return new URL(path, siteUrl).toString();
@@ -37,7 +38,10 @@ export function createPageMetadata({
   return {
     title,
     description,
-    alternates: { canonical },
+    alternates: {
+      canonical,
+      types: { "application/rss+xml": feedUrl },
+    },
     openGraph: {
       type: "website",
       url: canonical,

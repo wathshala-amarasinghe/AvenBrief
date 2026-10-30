@@ -20,6 +20,15 @@ type ReaderArticle = {
   imageCredit: string;
 };
 
+export type FeedArticle = {
+  slug: string;
+  title: string;
+  summary: string;
+  category: string;
+  author_name: string;
+  published_at: string | null;
+};
+
 export const getReaderArticle = cache(async (slug: string): Promise<ReaderArticle | null> => {
   await connection();
   const { data, error } = await getPublicSupabase()
@@ -90,4 +99,21 @@ export async function getPublishedSitemapEntries(): Promise<Array<{ slug: string
   }
 
   return data ?? [];
+}
+
+export async function getPublishedFeedEntries(): Promise<FeedArticle[]> {
+  await connection();
+  const { data, error } = await getPublicSupabase()
+    .from("articles")
+    .select("slug, title, summary, category, author_name, published_at")
+    .eq("status", "published")
+    .order("published_at", { ascending: false })
+    .limit(50);
+
+  if (error) {
+    console.error("RSS feed article query failed:", error);
+    throw new Error("Could not build the RSS feed.");
+  }
+
+  return (data ?? []) as FeedArticle[];
 }

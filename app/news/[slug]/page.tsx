@@ -4,11 +4,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import ArticleActions from "@/components/article-actions";
 import EditorialImage from "@/components/editorial-image";
+import JsonLd from "@/components/json-ld";
 import PublishedArticleCard from "@/components/published-article-card";
 import SiteHeader from "@/components/site-header";
 import { getArticleImage } from "@/lib/article-images";
 import { getPublishedArticles, getReaderArticle } from "@/lib/published-articles";
-import { absoluteUrl } from "@/lib/site-metadata";
+import { absoluteUrl, feedUrl } from "@/lib/site-metadata";
 
 type ArticlePageProps = { params: Promise<{ slug: string }> };
 export const instant = false;
@@ -28,7 +29,10 @@ export async function generateMetadata({ params }: ArticlePageProps): Promise<Me
   return {
     title: article.title + " | AvenBrief",
     description: article.summary,
-    alternates: { canonical },
+    alternates: {
+      canonical,
+      types: { "application/rss+xml": feedUrl },
+    },
     authors: [{ name: article.author_name }],
     openGraph: {
       type: "article",
@@ -61,9 +65,27 @@ async function ArticleContent({ params }: ArticlePageProps) {
   });
   const published = article.published_at ? new Intl.DateTimeFormat("en", { dateStyle: "long", timeZone: "UTC" }).format(new Date(article.published_at)) : "Publication date pending";
   const related = (await getPublishedArticles()).filter((item) => item.slug !== article.slug).slice(0, 3);
+  const canonical = absoluteUrl(`/news/${article.slug}`);
+  const imageUrl = absoluteUrl(image.src);
 
   return (
     <main className="mx-auto max-w-[1312px] px-6 pb-14 pt-8 md:px-8 md:pt-12 xl:px-0">
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "NewsArticle",
+          "@id": `${canonical}#article`,
+          mainEntityOfPage: { "@type": "WebPage", "@id": canonical },
+          headline: article.title,
+          description: article.summary,
+          image: [imageUrl],
+          datePublished: article.published_at ?? undefined,
+          author: { "@type": "Person", name: article.author_name },
+          publisher: { "@id": absoluteUrl("/#organization") },
+          articleSection: article.category,
+          isAccessibleForFree: true,
+        }}
+      />
       <article>
         <header className="mx-auto max-w-[980px] text-center">
           <Link href={`/category/${article.category.toLowerCase()}`} className="text-xs font-semibold uppercase tracking-[0.14em] text-brand hover:underline">{article.category}</Link>

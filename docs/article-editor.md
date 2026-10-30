@@ -8,7 +8,8 @@ The protected editor at `/admin/editor` creates and updates private drafts and p
 2. Open **New article** from the dashboard, or open an existing article.
 3. Enter the title. A URL slug is generated automatically and locks after the first save.
 4. Add the category, author, summary, article body, source URL, and optional featured-image details.
-5. Save privately with **Save draft**, or choose **Publish** after the content passes validation.
+5. Upload a JPEG, PNG, WebP, or GIF image up to 5 MB, or paste a public HTTPS image URL. Add accurate alternative text before publishing.
+6. Save privately with **Save draft**, or choose **Publish** after the content passes validation.
 
 Publishing requires an author, a summary of at least 20 characters, and an article body of at least 50 characters. A featured image must use a public HTTPS URL and requires alternative text before publication.
 
@@ -22,4 +23,4 @@ Saving a published article as a draft removes it from the homepage, search, cate
 - Article bodies are rendered as text rather than executable HTML.
 - Source and image URLs are validated on the server.
 
-Apply `20261030000500_editorial_ux_foundations.sql` before using featured-image fields.
+Apply `20261030000500_editorial_ux_foundations.sql` before using featured-image fields and `20261030000700_article_image_storage.sql` before uploading files. Uploads use the protected server action and never expose the Supabase service-role key to the browser.

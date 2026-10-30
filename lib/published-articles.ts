@@ -75,3 +75,19 @@ export async function getPublishedArticlePage(
 export async function getPublishedArticles(): Promise<ArticlePreview[]> {
   return (await getPublishedArticlePage()).articles;
 }
+
+export async function getPublishedSitemapEntries(): Promise<Array<{ slug: string; published_at: string | null }>> {
+  const { data, error } = await getPublicSupabase()
+    .from("articles")
+    .select("slug, published_at")
+    .eq("status", "published")
+    .order("published_at", { ascending: false })
+    .limit(1000);
+
+  if (error) {
+    console.error("Sitemap article query failed:", error);
+    return [];
+  }
+
+  return data ?? [];
+}

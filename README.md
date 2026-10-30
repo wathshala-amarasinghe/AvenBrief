@@ -16,6 +16,7 @@ The public site is available at `http://localhost:3000`. The protected admin are
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 - `NEXT_PUBLIC_CONTACT_EMAIL`
+- `NEXT_PUBLIC_SITE_URL`
 - `ADMIN_USER_ID`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `CRON_SECRET`
@@ -34,5 +35,7 @@ npm run build
 ## Deployment
 
 Production deploys from the `main` branch to Vercel. `vercel.json` schedules the protected RSS ingestion endpoint once per day. Configure every required environment variable in Vercel before deploying.
+
+Set `NEXT_PUBLIC_SITE_URL` to the production origin, without a trailing path. It controls canonical URLs, the sitemap, robots metadata, and social-sharing links.
 
 See `docs/article-editor.md` and `docs/rss-inbox.md` for editorial workflow details.

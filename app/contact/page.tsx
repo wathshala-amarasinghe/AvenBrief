@@ -3,8 +3,13 @@ import Image from "next/image";
 import Link from "next/link";
 import SiteHeader from "@/components/site-header";
 import ContactForm from "@/components/contact-form";
+import { createPageMetadata } from "@/lib/site-metadata";
 
-export const metadata: Metadata = { title: "Contact AvenBrief", description: "Contact AvenBrief with editorial feedback, correction requests, source concerns, or general questions." };
+export const metadata: Metadata = createPageMetadata({
+  title: "Contact AvenBrief",
+  description: "Contact AvenBrief with editorial feedback, correction requests, source concerns, or general questions.",
+  path: "/contact",
+});
 
 export default function ContactPage() {
   const contactEmail = process.env.NEXT_PUBLIC_CONTACT_EMAIL?.trim();

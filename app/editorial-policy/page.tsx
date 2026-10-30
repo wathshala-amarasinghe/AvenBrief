@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import TrustPage, { TrustSection } from "@/components/trust-page";
+import { createPageMetadata } from "@/lib/site-metadata";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "Editorial Policy | AvenBrief",
   description:
     "Read AvenBrief's standards for accuracy, sourcing, attribution, editorial review and automation.",
-};
+  path: "/editorial-policy",
+});
 
 export default function EditorialPolicyPage() {
   return (

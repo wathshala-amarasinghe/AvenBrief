@@ -6,6 +6,7 @@ import SiteHeader from "@/components/site-header";
 import ArticleResults from "@/components/article-results";
 import { categories } from "@/lib/categories";
 import { normalisePage } from "@/lib/article-browse.mjs";
+import { createPageMetadata } from "@/lib/site-metadata";
 
 type CategoryPageProps = {
   params: Promise<{ slug: string }>;
@@ -23,10 +24,11 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
   const category = categories.find((item) => item.slug === slug);
   if (!category) notFound();
 
-  return {
+  return createPageMetadata({
     title: category.name + " News | AvenBrief",
     description: category.description,
-  };
+    path: `/category/${category.slug}`,
+  });
 }
 
 async function CategoryContent({ params, searchParams }: CategoryPageProps) {

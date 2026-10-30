@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import TrustPage, { TrustSection } from "@/components/trust-page";
+import { createPageMetadata } from "@/lib/site-metadata";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "Privacy Policy | AvenBrief",
   description:
     "Learn what information AvenBrief may collect, why it is used and the choices available to readers.",
-};
+  path: "/privacy",
+});
 
 export default function PrivacyPage() {
   return (

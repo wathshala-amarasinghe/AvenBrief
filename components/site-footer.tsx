@@ -74,6 +74,9 @@ export default function SiteFooter() {
               <Link href="/privacy" className="text-muted hover:text-brand">
                 Privacy Policy
               </Link>
+              <Link href="/feed.xml" className="text-muted hover:text-brand">
+                RSS feed
+              </Link>
             </div>
           </nav>
         </div>

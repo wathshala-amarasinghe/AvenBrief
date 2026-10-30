@@ -14,11 +14,6 @@ alter table public.articles
   drop constraint if exists articles_image_credit_length,
   add constraint articles_image_credit_length check (char_length(image_credit) <= 300);
 
--- Remove the known invalid entry that points to an article page rather than a feed.
-delete from public.rss_sources
-where name = 'AvenBrief Editorial Team'
-  and feed_url like 'https://globalvoices.org/2026/10/26/volunteers-from-poland-%';
-
 comment on column public.articles.featured_image_url is
 'Optional public HTTPS image used on article cards and reader pages.';
 comment on column public.articles.image_alt is

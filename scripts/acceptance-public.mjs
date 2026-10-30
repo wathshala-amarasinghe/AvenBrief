@@ -87,6 +87,7 @@ if (articleMatch && feedItem) {
 
   const article = await request(articlePath);
   check(article.response.status === 200, `${articlePath} returned ${article.response.status}`);
+  check(!header(article, "x-robots-tag").includes("noindex"), "Published article is marked noindex");
   check(article.body.includes(title), "Article page does not contain its RSS title");
   check(article.body.includes('"NewsArticle"'), "Article page has no NewsArticle structured data");
   check(article.body.includes("application/rss+xml"), "Article page has no RSS discovery link");
@@ -101,6 +102,19 @@ if (articleMatch && feedItem) {
   check(search.response.status === 200, "Search request failed");
   check(search.body.includes(title), "Published article is missing from search results");
 }
+
+const retiredArticlePath = "/news/my-first-report";
+const retiredArticle = await request(retiredArticlePath);
+check(retiredArticle.response.status === 404, `${retiredArticlePath} returned ${retiredArticle.response.status}, expected 404`);
+check(header(retiredArticle, "x-robots-tag").includes("noindex"), "Retired article is indexable");
+check(header(retiredArticle, "x-robots-tag").includes("nofollow"), "Retired article permits search-engine link following");
+check(header(retiredArticle, "cache-control").includes("no-store"), "Retired article response may be cached");
+
+const missingArticlePath = "/news/acceptance-check-article-that-does-not-exist";
+const missingArticle = await request(missingArticlePath);
+check(missingArticle.response.status === 404, `${missingArticlePath} returned ${missingArticle.response.status}, expected 404`);
+check(header(missingArticle, "x-robots-tag").includes("noindex"), "Missing article is indexable");
+check(header(missingArticle, "cache-control").includes("no-store"), "Missing article response may be cached");
 
 const admin = await request("/admin", { redirect: "manual" });
 check(!admin.body.includes("A clear view of what needs your attention today."), "Admin dashboard data is visible without a session");

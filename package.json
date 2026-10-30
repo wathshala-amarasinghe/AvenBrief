@@ -14,6 +14,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "check:acceptance": "node scripts/acceptance-public.mjs && node scripts/acceptance-data.mjs",
+    "check:acceptance:public": "node scripts/acceptance-public.mjs",
+    "check:acceptance:data": "node scripts/acceptance-data.mjs",
     "check:client-secrets": "node scripts/check-client-secrets.mjs",
     "start": "next start",
     "lint": "eslint",

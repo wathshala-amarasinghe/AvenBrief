@@ -37,7 +37,7 @@ export default async function ArticleResults({
     <section aria-labelledby="results-heading" className="py-8 md:py-10">
       <div className="mb-7 flex flex-wrap items-center justify-between gap-4">
         {showHeading && <h2 id="results-heading" className="font-serif text-3xl font-semibold">
-          {category ? "Latest stories" : query ? "Search results" : "Published stories"}
+          {category ? "Latest stories" : query ? "Search results" : "Recent stories"}
         </h2>}
         <p role="status" className="text-sm text-muted">
           {result.count} {result.count === 1 ? "story" : "stories"}
@@ -61,7 +61,7 @@ export default async function ArticleResults({
               </Link>
             </>
           ) : (
-            <p>{category ? "No published stories in this category yet." : "No published stories are available yet."}</p>
+            <><p>{category ? "No published stories in this category yet." : "No published stories are available yet."}</p><div className="mt-4 flex flex-wrap gap-4"><Link href="/headlines" className="font-medium text-brand hover:underline">Browse source headlines →</Link>{category && <Link href="/search" className="font-medium text-brand hover:underline">Explore all stories →</Link>}</div></>
           )}
         </div>
       )}

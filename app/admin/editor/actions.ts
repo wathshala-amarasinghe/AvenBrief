@@ -52,16 +52,31 @@ export async function saveArticle(
       : null,
   };
 
-  const query = id
-    ? supabase.from("articles").update(record).eq("id", id)
-    : supabase.from("articles").insert(record);
+  const save = (values: typeof record | Omit<typeof record, "featured_image_url" | "image_alt" | "image_credit">) => {
+    const query = id
+      ? supabase.from("articles").update(values).eq("id", id)
+      : supabase.from("articles").insert(values);
+    return query.select("id, slug").single();
+  };
 
-  const { data, error } = await query.select("id, slug").single();
+  let { data, error } = await save(record);
+  const missingImageMigration = error && (
+    error.code === "PGRST204" ||
+    error.message?.includes("featured_image_url") ||
+    error.message?.includes("image_alt")
+  );
+
+  if (missingImageMigration && !values.featured_image_url && !values.image_alt && !values.image_credit) {
+    const { featured_image_url: _image, image_alt: _alt, image_credit: _credit, ...legacyRecord } = record;
+    ({ data, error } = await save(legacyRecord));
+  }
 
   if (error || !data) {
     console.error("Article save failed:", error);
     return {
-      error: error?.code === "23505"
+      error: missingImageMigration && (values.featured_image_url || values.image_alt || values.image_credit)
+        ? "Apply migration 20261030000500 before saving featured-image details. Your article text is still here."
+        : error?.code === "23505"
         ? "That URL name is already used. Choose another."
         : "Could not save the article. Your text is still here; please try again.",
     };

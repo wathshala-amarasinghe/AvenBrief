@@ -1,57 +1,27 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { ArticlePreview } from "@/lib/article-types";
+import { formatPublishedDate, getArticleImage } from "@/lib/article-images";
 
-const categoryImages: Record<string, { src: string; alt: string }> = {
-  World: { src: "/figma/city.png", alt: "City skyline and public transport" },
-  Technology: { src: "/figma/tram.png", alt: "Modern tram on a tree-lined street" },
-  Climate: { src: "/figma/energy.png", alt: "Wind turbines in a mountain landscape" },
-  Finance: { src: "/figma/work.png", alt: "Laptop and coffee on a desk" },
-  Gaming: { src: "/figma/coast.png", alt: "Town beside a mountain lake" },
-};
+function StoryImage({ article, sizes, className }: { article: ArticlePreview; sizes: string; className: string }) {
+  const image = getArticleImage(article);
+  if (image.src.startsWith("https://")) {
+    // Browser-loaded editorial media avoids server-side image proxying of arbitrary URLs.
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={image.src} alt={image.alt} className="h-full w-full object-cover" />;
+  }
+  return <Image src={image.src} alt={image.alt} fill sizes={sizes} className={className} />;
+}
 
-export default function PublishedArticleCard({
-  article,
-  variant = "grid",
-}: {
-  article: ArticlePreview;
-  variant?: "grid" | "list";
-}) {
-  const image = categoryImages[article.category] ?? categoryImages.World;
-
+export default function PublishedArticleCard({ article, variant = "grid" }: { article: ArticlePreview; variant?: "grid" | "list" }) {
   if (variant === "list") {
-    return (
-      <article className="grid grid-cols-[96px_minmax(0,1fr)] gap-4 py-6 md:grid-cols-[232px_minmax(0,1fr)] md:gap-6 md:py-8">
-        <Link href={`/news/${article.slug}`} className="relative h-24 overflow-hidden rounded-[10px] md:h-[150px]">
-          <Image src={image.src} alt={image.alt} fill sizes="(min-width: 768px) 232px, 96px" className="object-cover" />
-        </Link>
-        <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase text-brand">{article.category}</p>
-          <h3 className="mt-2 font-serif text-xl font-semibold leading-[1.35] md:text-2xl">
-            <Link href={`/news/${article.slug}`} className="hover:text-brand">{article.title}</Link>
-          </h3>
-          <p className="mt-3 hidden text-sm leading-6 text-muted md:block">{article.summary}</p>
-          <p className="mt-3 text-xs text-muted">{article.author_name} · 5 min read</p>
-        </div>
-      </article>
-    );
+    return <article className="grid grid-cols-[112px_minmax(0,1fr)] gap-4 py-5 md:grid-cols-[232px_minmax(0,1fr)] md:gap-6 md:py-8"><Link href={`/news/${article.slug}`} className="relative h-24 overflow-hidden rounded-[10px] md:h-[150px]"><StoryImage article={article} sizes="(min-width: 768px) 232px, 112px" className="object-cover" /></Link><div className="min-w-0"><p className="text-[11px] font-semibold uppercase text-brand">{article.category}</p><h3 className="mt-2 font-serif text-lg font-semibold leading-[1.3] md:text-2xl"><Link href={`/news/${article.slug}`} className="hover:text-brand">{article.title}</Link></h3><p className="mt-3 hidden text-sm leading-6 text-muted md:block">{article.summary}</p><p className="mt-3 text-xs text-muted">{article.author_name} · {formatPublishedDate(article.published_at)}</p></div></article>;
   }
 
   return (
-    <article className="bg-white">
-      <Link href={`/news/${article.slug}`} className="relative block h-[210px] overflow-hidden rounded-[10px]">
-        <Image src={image.src} alt={image.alt} fill sizes="(min-width: 1024px) 421px, 100vw" className="object-cover" />
-      </Link>
-      <p className="mt-5 text-xs font-semibold uppercase tracking-wider text-brand">
-        {article.category}
-      </p>
-      <h3 className="mt-3 font-serif text-2xl font-semibold leading-[1.3]">
-        <Link href={"/news/" + article.slug} className="hover:text-brand">
-          {article.title}
-        </Link>
-      </h3>
-      <p className="mt-3 text-sm leading-6 text-muted">{article.summary}</p>
-      <p className="mt-3 text-xs text-muted">{article.author_name} · 5 min read</p>
+    <article className="grid grid-cols-[112px_minmax(0,1fr)] gap-4 bg-white md:block">
+      <Link href={`/news/${article.slug}`} className="relative block h-24 overflow-hidden rounded-[10px] md:h-[210px]"><StoryImage article={article} sizes="(min-width: 1024px) 421px, (min-width: 768px) 50vw, 112px" className="object-cover" /></Link>
+      <div className="min-w-0"><p className="text-[11px] font-semibold uppercase tracking-wider text-brand md:mt-5">{article.category}</p><h3 className="mt-2 font-serif text-lg font-semibold leading-[1.3] md:mt-3 md:text-2xl"><Link href={`/news/${article.slug}`} className="hover:text-brand">{article.title}</Link></h3><p className="mt-3 hidden text-sm leading-6 text-muted md:block">{article.summary}</p><p className="mt-3 text-xs text-muted">{article.author_name} · {formatPublishedDate(article.published_at)}</p></div>
     </article>
   );
 }

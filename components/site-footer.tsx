@@ -80,7 +80,7 @@ export default function SiteFooter() {
 
         <div className="mt-8 flex flex-col justify-between gap-3 border-t border-border pt-6 text-xs text-muted sm:flex-row">
           <p>© 2026 AvenBrief.</p>
-          <p>Development preview · Includes sample stories</p>
+          <p>Independent coverage · Review-first publishing</p>
         </div>
       </div>
     </footer>

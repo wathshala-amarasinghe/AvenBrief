@@ -26,7 +26,7 @@ async function SettingsContent() {
           <div className="border-b border-border px-6 py-5"><h2 className="font-serif text-2xl font-semibold">RSS automation</h2><p className="mt-2 text-sm leading-6 text-muted">Scheduled imports add stories to the review queue. They never publish articles automatically.</p></div>
           <div className="flex flex-wrap items-center justify-between gap-5 px-6 py-6">
             <div><h3 className="font-medium">Global import switch</h3><p className="mt-1 text-sm text-muted">Current status: <span className={paused ? "text-red-700" : "text-green-700"}>{paused ? "Paused" : "Active"}</span></p></div>
-            <form action={toggleImportPause}><input type="hidden" name="next_paused" value={paused ? "false" : "true"} /><SubmitButton secondary={!paused} pendingText="Updating…">{paused ? "Resume imports" : "Pause imports"}</SubmitButton></form>
+            <form action={toggleImportPause}><input type="hidden" name="next_paused" value={paused ? "false" : "true"} /><input type="hidden" name="return_to" value="/admin/settings" /><SubmitButton secondary={!paused} pendingText="Updating…">{paused ? "Resume imports" : "Pause imports"}</SubmitButton></form>
           </div>
         </section>
 

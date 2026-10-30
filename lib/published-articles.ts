@@ -3,7 +3,6 @@ import "server-only";
 import { cache } from "react";
 import { connection } from "next/server";
 import { getPublicSupabase } from "@/lib/supabase-public";
-import { articles as samples } from "@/lib/news";
 import type { ArticlePreview, ArticleRecord, PublishedArticlePage } from "@/lib/article-types";
 import { ARTICLE_PAGE_SIZE, createPublishedArticleQuery, normalisePage } from "@/lib/article-browse.mjs";
 
@@ -18,22 +17,12 @@ type ReaderArticle = {
   published_at: string | null;
   imageSrc: string | null;
   imageAlt: string;
+  imageCredit: string;
   isSample: boolean;
 };
 
 // Request-scoped deduplication only; never use an authenticated client for public reads.
 export const getReaderArticle = cache(async (slug: string): Promise<ReaderArticle | null> => {
-  const sample = samples.find((article) => article.slug === slug);
-  if (sample) {
-    return {
-      ...sample,
-      author_name: "",
-      source_url: null,
-      published_at: null,
-      isSample: true,
-    };
-  }
-
   await connection();
   const { data, error } = await getPublicSupabase()
     .from("articles")
@@ -55,8 +44,9 @@ export const getReaderArticle = cache(async (slug: string): Promise<ReaderArticl
     author_name: article.author_name,
     source_url: article.source_url,
     published_at: article.published_at,
-    imageSrc: null,
-    imageAlt: "",
+    imageSrc: article.featured_image_url ?? null,
+    imageAlt: article.image_alt ?? "",
+    imageCredit: article.image_credit ?? "",
     isSample: false,
   };
 });

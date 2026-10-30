@@ -9,7 +9,7 @@ import { categories } from "@/lib/categories";
 import { getAdminSupabase } from "@/lib/supabase-admin";
 import {
   addSource,
-  toggleImportPause,
+  removeSource,
   toggleSource,
   updateSource,
 } from "./actions";
@@ -42,7 +42,7 @@ async function SourcesContent({ searchParams }: SourcesPageProps) {
   const params = await searchParams;
   const supabase = getAdminSupabase();
 
-  const [sourcesResult, settingsResult, runsResult] = await Promise.all([
+  const [sourcesResult, runsResult] = await Promise.all([
     supabase
       .from("rss_sources")
       .select(
@@ -50,11 +50,6 @@ async function SourcesContent({ searchParams }: SourcesPageProps) {
       )
       .order("enabled", { ascending: false })
       .order("name"),
-    supabase
-      .from("rss_import_settings")
-      .select("paused")
-      .eq("id", 1)
-      .single(),
     supabase
       .from("rss_import_runs")
       .select(
@@ -65,7 +60,6 @@ async function SourcesContent({ searchParams }: SourcesPageProps) {
   ]);
 
   const { data: sources, error } = sourcesResult;
-  const { data: importSettings, error: settingsError } = settingsResult;
   const { data: recentRuns, error: runsError } = runsResult;
 
   if (error) {
@@ -80,6 +74,8 @@ async function SourcesContent({ searchParams }: SourcesPageProps) {
   const notice =
     params.result === "added"
       ? "Source added."
+      : params.result === "removed"
+        ? "Paused source removed. Existing inbox history was preserved."
       : params.result === "updated"
         ? "Source settings saved."
         : params.result === "enabled"
@@ -117,12 +113,7 @@ async function SourcesContent({ searchParams }: SourcesPageProps) {
             individual imports without removing history.
           </p>
         </div>
-        <Link
-          href="/admin/inbox"
-          className="rounded-xl border border-border px-5 py-3 hover:bg-soft"
-        >
-          Open RSS inbox
-        </Link>
+        <div className="flex flex-wrap gap-3"><Link href="/admin/settings" className="rounded-xl border border-border px-5 py-3 hover:bg-soft">Automation settings</Link><Link href="/admin/inbox" className="rounded-xl border border-border px-5 py-3 hover:bg-soft">Open RSS inbox</Link></div>
       </div>
 
       {notice && (
@@ -135,42 +126,6 @@ async function SourcesContent({ searchParams }: SourcesPageProps) {
           {notice}
         </p>
       )}
-
-      <section className="mt-10 rounded-xl border border-border p-6">
-        <div className="flex flex-wrap items-center justify-between gap-5">
-          <div>
-            <h2 className="font-serif text-2xl font-semibold">Global import control</h2>
-            <p className="mt-2 text-sm text-muted">
-              Pausing stops both the manual inbox button and scheduled endpoint.
-            </p>
-          </div>
-
-          {settingsError || !importSettings ? (
-            <p role="alert" className="text-sm text-red-700">
-              Apply the scheduled-import migration to use this control.
-            </p>
-          ) : (
-            <form action={toggleImportPause}>
-              <input
-                type="hidden"
-                name="next_paused"
-                value={importSettings.paused ? "false" : "true"}
-              />
-              <SubmitButton secondary pendingText="Updating…">
-                {importSettings.paused ? "Resume all imports" : "Pause all imports"}
-              </SubmitButton>
-            </form>
-          )}
-        </div>
-
-        <p className={`mt-5 inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
-          importSettings?.paused
-            ? "bg-amber-50 text-amber-800"
-            : "bg-green-50 text-green-700"
-        }`}>
-          {importSettings?.paused ? "Globally paused" : "Importing active"}
-        </p>
-      </section>
 
       <section className="mt-10 rounded-xl border border-border p-6">
         <h2 className="font-serif text-2xl font-semibold">Add approved source</h2>
@@ -230,7 +185,7 @@ async function SourcesContent({ searchParams }: SourcesPageProps) {
           </label>
 
           <div className="md:text-right">
-            <SubmitButton pendingText="Adding source…">Add source</SubmitButton>
+            <SubmitButton pendingText="Testing feed…">Test &amp; add source</SubmitButton>
           </div>
         </form>
       </section>
@@ -293,11 +248,7 @@ async function SourcesContent({ searchParams }: SourcesPageProps) {
                 </div>
               </dl>
 
-              {source.last_error && (
-                <p role="status" className="mt-5 rounded-xl bg-red-50 p-4 text-sm text-red-700">
-                  Last error: {source.last_error}
-                </p>
-              )}
+              {source.last_error && <div role="status" className="mt-5 rounded-xl bg-red-50 p-4 text-sm text-red-700"><p className="font-medium">This source could not be imported.</p><p className="mt-1">{source.last_error.includes("Attribute without value") ? "The URL returned malformed content instead of a valid RSS or Atom feed. Update the feed URL or remove this source." : source.last_error}</p><details className="mt-2 text-xs"><summary className="cursor-pointer">Technical details</summary><p className="mt-2 break-all">{source.last_error}</p></details></div>}
 
               <details className="mt-6">
                 <summary className="cursor-pointer text-sm font-medium text-brand">
@@ -354,6 +305,7 @@ async function SourcesContent({ searchParams }: SourcesPageProps) {
                     <SubmitButton pendingText="Saving source…">Save source</SubmitButton>
                   </div>
                 </form>
+                {!source.enabled && <form action={removeSource} className="mt-5 border-t border-border pt-5"><input type="hidden" name="id" value={source.id} /><p className="mb-3 text-xs text-muted">Removal is available only while a source is paused. Imported inbox history is retained.</p><SubmitButton secondary pendingText="Removing…">Remove source</SubmitButton></form>}
               </details>
             </article>
           ))

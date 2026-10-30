@@ -4,19 +4,23 @@ import Link from "next/link";
 import { connection } from "next/server";
 import AdminShell from "@/components/admin-shell";
 import { requireAdmin } from "@/lib/auth";
+import { getAdminSupabase } from "@/lib/supabase-admin";
 
 export const metadata: Metadata = { title: "Admin Dashboard | AvenBrief", robots: { index: false, follow: false } };
 
 async function AdminDashboard() {
   await connection();
-  const { supabase, user } = await requireAdmin();
-  const [articleResult, reviewResult, sourceResult] = await Promise.all([
+  const { user } = await requireAdmin();
+  const supabase = getAdminSupabase();
+  const [articleResult, articleCountResult, publishedCountResult, reviewResult, sourceResult] = await Promise.all([
     supabase.from("articles").select("id, title, status, category, created_at").order("created_at", { ascending: false }).limit(8),
+    supabase.from("articles").select("id", { count: "exact", head: true }),
+    supabase.from("articles").select("id", { count: "exact", head: true }).eq("status", "published"),
     supabase.from("rss_inbox").select("id", { count: "exact", head: true }).eq("status", "new"),
     supabase.from("rss_sources").select("id", { count: "exact", head: true }).eq("enabled", true),
   ]);
   const articles = articleResult.data ?? [];
-  const published = articles.filter((article) => article.status === "published").length;
+  const metricError = articleCountResult.error || publishedCountResult.error || reviewResult.error || sourceResult.error;
 
   return (
     <AdminShell current="/admin" email={user.email}>
@@ -27,10 +31,12 @@ async function AdminDashboard() {
         </div>
 
         <section className="mt-8 grid gap-4 sm:grid-cols-3" aria-label="Newsroom metrics">
-          {[{ label: "Recent articles", value: articles.length, note: `${published} published` }, { label: "Awaiting review", value: reviewResult.count ?? 0, note: "From approved feeds" }, { label: "Active sources", value: sourceResult.count ?? 0, note: "Scheduled for import" }].map((metric) => (
+          {[{ label: "All articles", value: articleCountResult.count ?? 0, note: `${publishedCountResult.count ?? 0} published` }, { label: "Awaiting review", value: reviewResult.count ?? 0, note: "From approved feeds" }, { label: "Active sources", value: sourceResult.count ?? 0, note: "Scheduled for import" }].map((metric) => (
             <article key={metric.label} className="rounded-[10px] border border-border bg-white p-5"><p className="text-sm text-muted">{metric.label}</p><p className="mt-3 font-serif text-[36px] font-semibold">{metric.value}</p><p className="mt-1 text-xs text-muted">{metric.note}</p></article>
           ))}
         </section>
+
+        {metricError && <p role="alert" className="mt-4 rounded-[10px] bg-red-50 p-4 text-sm text-red-700">Some dashboard totals could not be loaded. Open the related page for current data and check the server log.</p>}
 
         <section className="mt-8 rounded-[10px] border border-border bg-white">
           <div className="flex items-center justify-between border-b border-border px-5 py-4"><h2 className="font-serif text-2xl font-semibold">Recent articles</h2><Link href="/admin/editor" className="text-sm text-brand hover:underline">View editor →</Link></div>

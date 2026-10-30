@@ -29,7 +29,8 @@ body:has(.admin-login) {
 }
 
 body:has(.admin-shell) > footer,
-body:has(.admin-login) > footer {
+body:has(.admin-login) > footer,
+body:has(.admin-route) > footer {
   display: none;
 }
 

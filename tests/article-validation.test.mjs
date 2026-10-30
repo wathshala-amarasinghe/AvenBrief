@@ -74,6 +74,14 @@ test("ordinary source links are accepted and an empty source becomes null", () =
   assert.equal(validateArticle(draft).value.source_url, null);
 });
 
+test("featured images require public HTTPS URLs and alt text when publishing", () => {
+  assert.equal(validateArticle({ ...draft, featured_image_url: "http://example.com/image.jpg" }).ok, false);
+  assert.equal(validateArticle({ ...published, featured_image_url: "https://example.com/image.jpg", image_alt: "" }).ok, false);
+  const result = validateArticle({ ...published, featured_image_url: "https://example.com/image.jpg", image_alt: "A city skyline", image_credit: "Example News" });
+  assert.equal(result.ok, true);
+  assert.equal(result.value.featured_image_url, "https://example.com/image.jpg");
+});
+
 test("text is trimmed and Windows line endings are normalized", () => {
   const result = validateArticle({ ...draft, title: "  A title  ", body: " One\r\n\r\nTwo " });
   assert.equal(result.ok, true);

@@ -30,6 +30,12 @@ type RssSource = {
 function errorMessage(error: unknown) {
   if (error && typeof error === "object" && "message" in error) {
     const message = String(error.message).trim();
+    if (/Attribute without value|Invalid character in entity name|Unexpected close tag/i.test(message)) {
+      return "The source returned malformed XML and could not be read as an RSS or Atom feed.";
+    }
+    if (/returned a web page instead of an RSS|Unexpected root element|Non-whitespace before first tag/i.test(message)) {
+      return "The configured URL is a web page, not a valid RSS or Atom feed.";
+    }
     if (message) return message.slice(0, 500);
   }
 

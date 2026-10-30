@@ -141,12 +141,27 @@ export async function toggleSource(formData: FormData) {
   redirect("/admin/sources?result=" + (enabled ? "enabled" : "disabled"));
 }
 
+export async function removeSource(formData: FormData) {
+  await requireAdmin();
+  const id = formData.get("id");
+  if (typeof id !== "string" || !isArticleId(id)) redirect("/admin/sources?result=invalid");
+  const { error } = await getAdminSupabase().from("rss_sources").delete().eq("id", id).eq("enabled", false);
+  if (error) {
+    logDatabaseError("RSS source removal failed:", error);
+    redirect("/admin/sources?result=database_error");
+  }
+  revalidatePath("/admin");
+  revalidatePath("/admin/sources");
+  redirect("/admin/sources?result=removed");
+}
+
 export async function toggleImportPause(formData: FormData) {
   await requireAdmin();
   const nextPaused = formData.get("next_paused");
+  const returnTo = formData.get("return_to") === "/admin/settings" ? "/admin/settings" : "/admin/sources";
 
   if (nextPaused !== "true" && nextPaused !== "false") {
-    redirect("/admin/sources?result=invalid");
+    redirect(returnTo + "?result=invalid");
   }
 
   const paused = nextPaused === "true";
@@ -157,9 +172,10 @@ export async function toggleImportPause(formData: FormData) {
 
   if (error) {
     logDatabaseError("RSS import pause update failed:", error);
-    redirect("/admin/sources?result=database_error");
+    redirect(returnTo + "?result=database_error");
   }
 
   revalidatePath("/admin/sources");
-  redirect("/admin/sources?result=" + (paused ? "imports_paused" : "imports_resumed"));
+  revalidatePath("/admin/settings");
+  redirect(returnTo + "?result=" + (paused ? "imports_paused" : "imports_resumed"));
 }

@@ -3,22 +3,17 @@ import { Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import ArticleActions from "@/components/article-actions";
+import PublishedArticleCard from "@/components/published-article-card";
 import SiteHeader from "@/components/site-header";
-import NewsCard from "@/components/news-card";
-import { articles as samples } from "@/lib/news";
-import { getReaderArticle } from "@/lib/published-articles";
+import { getPublishedArticles, getReaderArticle } from "@/lib/published-articles";
 
 type ArticlePageProps = { params: Promise<{ slug: string }> };
 export const instant = false;
 
 const categoryImages: Record<string, string> = {
-  World: "/figma/article-tram.png", Technology: "/figma/tram.png",
-  Climate: "/figma/energy.png", Finance: "/figma/work.png", Gaming: "/figma/coast.png",
+  World: "/figma/article-tram.png", Technology: "/figma/tram.png", Climate: "/figma/energy.png", Finance: "/figma/work.png", Gaming: "/figma/coast.png",
 };
-
-export function generateStaticParams() {
-  return samples.map((article) => ({ slug: article.slug }));
-}
 
 export async function generateMetadata({ params }: ArticlePageProps): Promise<Metadata> {
   const { slug } = await params;
@@ -32,9 +27,8 @@ async function ArticleContent({ params }: ArticlePageProps) {
   const article = await getReaderArticle(slug);
   if (!article) notFound();
   const imageSrc = article.imageSrc ?? categoryImages[article.category] ?? categoryImages.World;
-  const published = article.published_at
-    ? new Intl.DateTimeFormat("en", { dateStyle: "long", timeZone: "UTC" }).format(new Date(article.published_at))
-    : "30 October 2026";
+  const published = article.published_at ? new Intl.DateTimeFormat("en", { dateStyle: "long", timeZone: "UTC" }).format(new Date(article.published_at)) : "Publication date pending";
+  const related = (await getPublishedArticles()).filter((item) => item.slug !== article.slug).slice(0, 3);
 
   return (
     <main className="mx-auto max-w-[1312px] px-6 pb-14 pt-8 md:px-8 md:pt-12 xl:px-0">
@@ -43,43 +37,26 @@ async function ArticleContent({ params }: ArticlePageProps) {
           <Link href={`/category/${article.category.toLowerCase()}`} className="text-xs font-semibold uppercase tracking-[0.14em] text-brand hover:underline">{article.category}</Link>
           <h1 className="mt-4 font-serif text-[40px] font-semibold leading-[1.08] md:text-[64px]">{article.title}</h1>
           <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-muted md:text-xl">{article.summary}</p>
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 text-xs text-muted">
-            <span>{article.isSample ? "AvenBrief Editorial Team" : `By ${article.author_name}`}</span><span aria-hidden="true">•</span>
-            <time dateTime={article.published_at ?? undefined}>{published}</time><span aria-hidden="true">•</span><span>5 min read</span>
-          </div>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 text-xs text-muted"><span>By {article.author_name}</span><span aria-hidden="true">•</span><time dateTime={article.published_at ?? undefined}>{published}</time><span aria-hidden="true">•</span><span>{Math.max(1, Math.ceil(article.paragraphs.join(" ").split(/\s+/).length / 220))} min read</span></div>
         </header>
 
-        <div className="relative mt-9 aspect-[16/9] overflow-hidden rounded-[10px] md:mt-12 md:aspect-[16/7.8]">
-          <Image src={imageSrc} alt={article.imageAlt || article.title} fill sizes="(min-width: 1280px) 1312px, 100vw" className="object-cover" priority />
-        </div>
+        <div className="relative mt-9 aspect-[16/9] overflow-hidden rounded-[10px] md:mt-12 md:aspect-[16/7.8]">{imageSrc.startsWith("https://") ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={imageSrc} alt={article.imageAlt || article.title} className="h-full w-full object-cover" />
+        ) : <Image src={imageSrc} alt={article.imageAlt || article.title} fill sizes="(min-width: 1280px) 1312px, 100vw" className="object-cover" priority />}</div>
+        {article.imageCredit && <p className="mt-2 text-right text-xs text-muted">Image: {article.imageCredit}</p>}
 
         <div className="mx-auto mt-10 grid max-w-[1060px] gap-10 md:grid-cols-[72px_minmax(0,680px)_220px] md:items-start">
-          <aside aria-label="Article actions" className="flex gap-3 md:sticky md:top-5 md:flex-col">
-            <button type="button" aria-label="Share article" className="grid h-11 w-11 place-items-center rounded-full border border-border hover:bg-soft"><Image src="/figma/share.svg" alt="" width={18} height={18} /></button>
-            <button type="button" aria-label="Bookmark article" className="grid h-11 w-11 place-items-center rounded-full border border-border hover:bg-soft"><Image src="/figma/bookmark.svg" alt="" width={18} height={18} /></button>
-          </aside>
-
+          <aside aria-label="Article actions" className="md:sticky md:top-5"><ArticleActions slug={article.slug} title={article.title} /></aside>
           <div className="space-y-6 text-[17px] leading-8 text-ink">
-            {article.paragraphs.map((paragraph, index) => (
-              <p key={index} className={index === 0 ? "first-letter:float-left first-letter:mr-2 first-letter:font-serif first-letter:text-6xl first-letter:leading-[0.85]" : "whitespace-pre-wrap wrap-break-word"}>{paragraph}</p>
-            ))}
+            {article.paragraphs.map((paragraph, index) => <p key={index} className={index === 0 ? "first-letter:float-left first-letter:mr-2 first-letter:font-serif first-letter:text-6xl first-letter:leading-[0.85]" : "whitespace-pre-wrap wrap-break-word"}>{paragraph}</p>)}
             {article.source_url && <p className="border-t border-border pt-6 text-sm text-muted">Original source: <a href={article.source_url} rel="noopener noreferrer" className="break-all text-brand hover:underline">{article.source_url}</a></p>}
           </div>
-
-          <aside className="rounded-[10px] bg-soft p-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand">In brief</p>
-            <p className="mt-3 text-sm leading-6 text-muted">Clear reporting, useful context, and links back to original sources.</p>
-            <Link href="/editorial-policy" className="mt-4 inline-block text-sm font-medium text-brand hover:underline">Our editorial approach →</Link>
-          </aside>
+          <aside className="rounded-[10px] bg-soft p-5"><p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand">In brief</p><p className="mt-3 text-sm leading-6 text-muted">Clear reporting, useful context, and links back to original sources.</p><Link href="/editorial-policy" className="mt-4 inline-block text-sm font-medium text-brand hover:underline">Our editorial approach →</Link></aside>
         </div>
       </article>
 
-      <section className="mt-16 border-t border-border pt-8" aria-labelledby="keep-reading">
-        <h2 id="keep-reading" className="font-serif text-[32px] font-semibold">Keep reading</h2>
-        <div className="mt-7 grid gap-8 md:grid-cols-3 md:gap-6">
-          {samples.slice(0, 3).map((story, index) => <NewsCard key={story.slug} {...story} imageSrc={["/figma/coast.png", "/figma/energy.png", "/figma/work.png"][index]} />)}
-        </div>
-      </section>
+      {related.length > 0 && <section className="mt-16 border-t border-border pt-8" aria-labelledby="keep-reading"><h2 id="keep-reading" className="font-serif text-[32px] font-semibold">Keep reading</h2><div className="mt-7 grid gap-8 md:grid-cols-3 md:gap-6">{related.map((story) => <PublishedArticleCard key={story.id} article={story} />)}</div></section>}
     </main>
   );
 }

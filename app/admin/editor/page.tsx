@@ -45,7 +45,7 @@ async function EditorContent({ searchParams }: EditorPageProps) {
 
   return (
     <AdminShell current="/admin/editor" email={user.email}>
-    <main className="mx-auto max-w-[980px] px-6 py-8 md:px-10 md:py-10">
+    <main className="mx-auto max-w-[1240px] px-6 py-8 md:px-10 md:py-10">
       <Link href="/admin" className="text-sm text-muted hover:text-brand">← Overview</Link>
       <div className="mt-5 flex flex-wrap items-end justify-between gap-4">
         <div><p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand">Articles</p><h1 className="mt-2 font-serif text-[38px] font-semibold">{article ? "Review & edit" : "New article"}</h1></div>

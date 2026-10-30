@@ -1,7 +1,16 @@
 {
-  "name": "world-news-blog",
+  "name": "avenbrief",
   "version": "0.1.0",
   "private": true,
+  "description": "A review-first world news publication built with Next.js and Supabase.",
+  "homepage": "https://github.com/wathshala-amarasinghe/AvenBrief#readme",
+  "bugs": {
+    "url": "https://github.com/wathshala-amarasinghe/AvenBrief/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wathshala-amarasinghe/AvenBrief.git"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",

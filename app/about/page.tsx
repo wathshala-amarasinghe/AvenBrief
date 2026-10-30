@@ -27,7 +27,7 @@ export default function AboutPage() {
             <Link href="/category/world" className="mt-8 inline-flex rounded-lg bg-brand px-5 py-3 text-sm font-medium text-white hover:bg-blue-700">Explore our coverage</Link>
           </div>
           <div className="relative aspect-4/3 overflow-hidden rounded-[10px]">
-            <Image src="/figma/about-work.png" alt="A calm workspace with a laptop and notebook" fill sizes="(min-width: 768px) 580px, 100vw" className="object-cover" priority />
+            <Image src="/figma/work.png" alt="A calm workspace with a laptop and notebook" fill sizes="(min-width: 768px) 580px, 100vw" className="object-cover" priority />
           </div>
         </section>
 

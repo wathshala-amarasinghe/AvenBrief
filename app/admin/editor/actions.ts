@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
-import { articles as samples } from "@/lib/news";
 import { isArticleId, validateArticle } from "@/lib/article-validation.mjs";
 import type { EditorState } from "@/lib/article-types";
 
@@ -11,12 +10,8 @@ export async function saveArticle(
   _previousState: EditorState,
   formData: FormData,
 ): Promise<EditorState> {
-  // Check again for every write; a protected page alone cannot authorize an action.
   const { supabase } = await requireAdmin();
-  const result = validateArticle(
-    Object.fromEntries(formData.entries()),
-    samples.map((article) => article.slug),
-  );
+  const result = validateArticle(Object.fromEntries(formData.entries()));
 
   if (!result.ok) return { error: result.error };
 
@@ -67,7 +62,17 @@ export async function saveArticle(
   );
 
   if (missingImageMigration && !values.featured_image_url && !values.image_alt && !values.image_credit) {
-    const { featured_image_url: _image, image_alt: _alt, image_credit: _credit, ...legacyRecord } = record;
+    const legacyRecord = {
+      title: record.title,
+      slug: record.slug,
+      summary: record.summary,
+      body: record.body,
+      category: record.category,
+      author_name: record.author_name,
+      source_url: record.source_url,
+      status: record.status,
+      published_at: record.published_at,
+    };
     ({ data, error } = await save(legacyRecord));
   }
 

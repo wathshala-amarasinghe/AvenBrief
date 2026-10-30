@@ -1,16 +1,11 @@
 import Link from "next/link";
-import Image from "next/image";
+import EditorialImage from "@/components/editorial-image";
 import type { ArticlePreview } from "@/lib/article-types";
 import { formatPublishedDate, getArticleImage } from "@/lib/article-images";
 
 function StoryImage({ article, sizes, className }: { article: ArticlePreview; sizes: string; className: string }) {
   const image = getArticleImage(article);
-  if (image.src.startsWith("https://")) {
-    // Browser-loaded editorial media avoids server-side image proxying of arbitrary URLs.
-    // eslint-disable-next-line @next/next/no-img-element
-    return <img src={image.src} alt={image.alt} className="h-full w-full object-cover" />;
-  }
-  return <Image src={image.src} alt={image.alt} fill sizes={sizes} className={className} />;
+  return <EditorialImage src={image.src} alt={image.alt} sizes={sizes} className={className} />;
 }
 
 export default function PublishedArticleCard({ article, variant = "grid" }: { article: ArticlePreview; variant?: "grid" | "list" }) {

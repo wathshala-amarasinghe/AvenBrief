@@ -49,10 +49,6 @@ test("URL names are lowercase words separated by single hyphens", () => {
   }
 });
 
-test("sample article URL names cannot be reused", () => {
-  assert.equal(validateArticle(draft, [draft.slug]).ok, false);
-});
-
 test("unknown categories and non-text input are rejected", () => {
   assert.equal(validateArticle({ ...draft, category: "Other" }).ok, false);
   assert.equal(validateArticle({ ...draft, title: { name: "upload" } }).ok, false);

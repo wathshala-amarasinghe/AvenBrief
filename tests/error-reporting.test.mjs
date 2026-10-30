@@ -1,6 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { safeRequestPath, sanitiseErrorMessage } from "../lib/error-reporting.mjs";
+import {
+  createClientErrorRecord,
+  safeRequestPath,
+  sanitiseErrorMessage,
+} from "../lib/error-reporting.mjs";
 
 test("request paths omit query parameters", () => {
   assert.equal(safeRequestPath("/search?q=private&token=secret"), "/search");
@@ -18,4 +22,18 @@ test("error messages redact credentials and tokens", () => {
 
 test("error messages are bounded", () => {
   assert.equal(sanitiseErrorMessage("x".repeat(2000)).length, 1000);
+});
+
+test("client error records are safe and omit URL query data", () => {
+  const error = Object.assign(new Error("Bearer private-token"), {
+    digest: "error-reference",
+  });
+  const record = createClientErrorRecord(error, "/news/story?token=private");
+
+  assert.deepEqual(record, {
+    event: "client_render_error",
+    message: "Bearer [redacted]",
+    path: "/news/story",
+    digest: "error-reference",
+  });
 });

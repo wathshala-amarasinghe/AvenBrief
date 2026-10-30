@@ -2,6 +2,8 @@ import { timingSafeEqual } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { runRssImport } from "@/lib/rss-import";
 
+const responseHeaders = { "Cache-Control": "private, no-store" };
+
 function authorised(request: Request, expectedSecret: string) {
   const header = request.headers.get("authorization") ?? "";
   const prefix = "Bearer ";
@@ -23,12 +25,15 @@ async function handleIngest(request: Request) {
     console.error("CRON_SECRET is missing or shorter than 32 characters.");
     return Response.json(
       { error: "Scheduled importing is not configured." },
-      { status: 503 },
+      { status: 503, headers: responseHeaders },
     );
   }
 
   if (!authorised(request, secret)) {
-    return Response.json({ error: "Unauthorized." }, { status: 401 });
+    return Response.json(
+      { error: "Unauthorized." },
+      { status: 401, headers: responseHeaders },
+    );
   }
 
   try {
@@ -39,13 +44,13 @@ async function handleIngest(request: Request) {
 
     return Response.json(summary, {
       status: summary.status === "failed" ? 500 : 200,
-      headers: { "Cache-Control": "no-store" },
+      headers: responseHeaders,
     });
   } catch (error) {
     console.error("Scheduled RSS import failed:", error);
     return Response.json(
       { error: "Scheduled import failed." },
-      { status: 500, headers: { "Cache-Control": "no-store" } },
+      { status: 500, headers: responseHeaders },
     );
   }
 }

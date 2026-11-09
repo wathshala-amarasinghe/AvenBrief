@@ -7,6 +7,17 @@ import { getAdminSupabase } from "@/lib/supabase-admin";
 import { runRssImport } from "@/lib/rss-import";
 import { isArticleId } from "@/lib/article-validation.mjs";
 
+function selectedStoryIds(formData: FormData) {
+  return Array.from(
+    new Set(
+      formData
+        .getAll("ids")
+        .filter((value): value is string => typeof value === "string")
+        .filter(isArticleId),
+    ),
+  ).slice(0, 50);
+}
+
 export async function importRss() {
   await requireAdmin();
   let summary;
@@ -69,6 +80,68 @@ export async function markReviewed(formData: FormData) {
 
   revalidatePath("/admin/inbox");
   redirect("/admin/inbox?result=reviewed");
+}
+
+export async function archiveStories(formData: FormData) {
+  await requireAdmin();
+  const ids = selectedStoryIds(formData);
+
+  if (!ids.length) redirect("/admin/inbox?result=selection_required");
+
+  const { data, error } = await getAdminSupabase()
+    .from("rss_inbox")
+    .update({ status: "archived", archived_at: new Date().toISOString() })
+    .in("id", ids)
+    .in("status", ["new", "reviewed"])
+    .select("id");
+
+  if (error) {
+    console.error("RSS bulk archive failed:", {
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+    });
+    redirect("/admin/inbox?result=database_error");
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/admin/analytics");
+  revalidatePath("/admin/inbox");
+  redirect(`/admin/inbox?result=archived&count=${data?.length ?? 0}`);
+}
+
+export async function restoreStories(formData: FormData) {
+  await requireAdmin();
+  const ids = selectedStoryIds(formData);
+
+  if (!ids.length) {
+    redirect("/admin/inbox?view=archived&result=selection_required");
+  }
+
+  const { data, error } = await getAdminSupabase()
+    .from("rss_inbox")
+    .update({ status: "new", archived_at: null })
+    .in("id", ids)
+    .eq("status", "archived")
+    .select("id");
+
+  if (error) {
+    console.error("RSS bulk restore failed:", {
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+    });
+    redirect("/admin/inbox?view=archived&result=database_error");
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/admin/analytics");
+  revalidatePath("/admin/inbox");
+  redirect(
+    `/admin/inbox?view=archived&result=restored&count=${data?.length ?? 0}`,
+  );
 }
 
 export async function createDraft(formData: FormData) {

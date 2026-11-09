@@ -7,6 +7,7 @@ const links = [
   { href: "/admin", label: "Overview", icon: "/figma/dashboard.svg" },
   { href: "/admin/editor", label: "Articles", icon: "/figma/document.svg" },
   { href: "/admin/inbox", label: "Review queue", icon: "/figma/clock.svg" },
+  { href: "/admin/analytics", label: "Analytics", icon: "/figma/dashboard.svg" },
   { href: "/admin/sources", label: "News sources", icon: "/figma/globe.svg" },
   { href: "/admin/settings", label: "Settings", icon: "/figma/settings.svg" },
 ];

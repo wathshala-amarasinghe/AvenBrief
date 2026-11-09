@@ -7,7 +7,7 @@ const serverOnlyNames = [
   "CRON_SECRET",
   "RSS_INGEST_SECRET",
   "ADMIN_USER_ID",
-  "OPENAI_API_KEY",
+  "GEMINI_API_KEY",
 ];
 
 function readLocalEnvironment() {

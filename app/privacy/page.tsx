@@ -17,7 +17,7 @@ export default function PrivacyPage() {
       eyebrow="Privacy Policy"
       title="Your privacy matters."
       intro="This policy explains the information AvenBrief may receive when you visit the site or contact us, and how that information is handled."
-      updated="Effective October 30, 2026"
+      updated="Effective November 9, 2026"
     >
       <TrustSection title="Information we may receive">
         <p>
@@ -65,9 +65,12 @@ export default function PrivacyPage() {
       <TrustSection title="Service providers and external sites">
         <p>
           AvenBrief relies on service providers, including Vercel for website
-          hosting and Supabase for database and administrator authentication.
-          Those providers may process limited information under their own terms
-          and privacy practices while delivering their services.
+          hosting, Supabase for database and administrator authentication, and
+          Google Gemini for optional AI-assisted drafting from public publisher
+          material. Reader contact messages and administrator credentials are
+          not intentionally sent to the drafting service. These providers may
+          process limited information under their own terms and privacy
+          practices while delivering their services.
         </p>
         <p>
           Articles may link to original publishers and other external websites.

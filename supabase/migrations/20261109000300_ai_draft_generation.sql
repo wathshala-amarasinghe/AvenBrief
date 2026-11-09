@@ -4,7 +4,7 @@ create table if not exists public.ai_draft_generations (
   id uuid primary key default gen_random_uuid(),
   inbox_id uuid not null references public.rss_inbox(id) on delete cascade,
   article_id uuid references public.articles(id) on delete set null,
-  provider text not null default 'openai',
+  provider text not null default 'google',
   model text not null,
   status text not null default 'running'
     check (status in ('running', 'succeeded', 'failed')),

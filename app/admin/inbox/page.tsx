@@ -161,7 +161,7 @@ async function InboxContent({ searchParams }: InboxPageProps) {
     invalid: "That story could not be identified.",
     category_required: "Choose a category before creating the draft.",
     draft_error: "The draft could not be created. Please try again.",
-    ai_not_configured: "AI drafting is not configured yet. Add OPENAI_API_KEY in Vercel, then redeploy.",
+    ai_not_configured: "AI drafting is not configured yet. Add GEMINI_API_KEY in Vercel, then redeploy.",
     ai_source_unavailable: "The original article could not be read safely. Open the source and create a manual draft instead.",
     ai_generation_failed: "The AI service could not create a valid draft. Please try again or create a manual draft.",
     ai_insufficient_source: "The source did not contain enough reliable information for an AI draft.",

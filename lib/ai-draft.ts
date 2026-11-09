@@ -11,6 +11,12 @@ const MAX_SOURCE_BYTES = 2_000_000;
 const MAX_SOURCE_CHARS = 24_000;
 const FETCH_TIMEOUT_MS = 15_000;
 const ALLOWED_CATEGORIES = ["World", "Technology", "Climate", "Finance", "Gaming"];
+const GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta";
+const DEFAULT_GEMINI_MODELS = [
+  "gemini-2.5-flash",
+  "gemini-2.5-flash-lite",
+  "gemini-2.0-flash",
+];
 
 export type AiDraft = {
   title: string;
@@ -164,6 +170,103 @@ function responseText(value: unknown) {
     .join("");
 }
 
+function normalizeGeminiModel(value: string | undefined) {
+  const normalized = value?.trim().replace(/^['"]|['"]$/g, "").replace(/^models\//, "") ?? "";
+  return /^gemini-[a-z0-9._-]+$/i.test(normalized) ? normalized : "";
+}
+
+function rankGeminiModel(model: string) {
+  const preferredIndex = DEFAULT_GEMINI_MODELS.indexOf(model);
+  if (preferredIndex >= 0) return preferredIndex;
+  if (/flash-lite/i.test(model)) return 10;
+  if (/flash/i.test(model)) return 20;
+  if (/pro/i.test(model)) return 30;
+  return 100;
+}
+
+async function discoverGeminiModels(apiKey: string) {
+  const response = await fetch(`${GEMINI_API_BASE}/models?pageSize=100`, {
+    cache: "no-store",
+    signal: AbortSignal.timeout(15_000),
+    headers: { "x-goog-api-key": apiKey },
+  }).catch(() => null);
+  if (!response?.ok) return [];
+
+  const payload: unknown = await response.json().catch(() => null);
+  if (!payload || typeof payload !== "object" || !("models" in payload) || !Array.isArray(payload.models)) {
+    return [];
+  }
+
+  return payload.models
+    .flatMap((entry) => {
+      if (!entry || typeof entry !== "object") return [];
+      const model = entry as { name?: unknown; supportedGenerationMethods?: unknown };
+      if (typeof model.name !== "string" || !Array.isArray(model.supportedGenerationMethods) ||
+        !model.supportedGenerationMethods.includes("generateContent")) return [];
+      const name = normalizeGeminiModel(model.name);
+      if (!name || /(embedding|image|tts|live|audio|vision)/i.test(name)) return [];
+      return [name];
+    })
+    .sort((left, right) => rankGeminiModel(left) - rankGeminiModel(right));
+}
+
+async function requestGeminiDraft(args: {
+  apiKey: string;
+  models: string[];
+  body: string;
+}) {
+  const attempted = new Set<string>();
+  let candidates = args.models;
+  let discoveryAttempted = false;
+
+  while (candidates.length) {
+    const model = candidates.find((candidate) => !attempted.has(candidate));
+    if (!model) break;
+    attempted.add(model);
+
+    const endpoint = `${GEMINI_API_BASE}/models/${encodeURIComponent(model)}:generateContent`;
+    const response = await fetch(endpoint, {
+      method: "POST",
+      signal: AbortSignal.timeout(60_000),
+      headers: {
+        "x-goog-api-key": args.apiKey,
+        "Content-Type": "application/json",
+      },
+      body: args.body,
+    }).catch(() => null);
+
+    if (!response) {
+      throw new AiDraftError("generation_failed", "The AI service did not respond in time.");
+    }
+    if (response.ok) return { response, model };
+
+    const errorPayload: unknown = await response.json().catch(() => null);
+    const errorMessage = errorPayload && typeof errorPayload === "object" && "error" in errorPayload &&
+      errorPayload.error && typeof errorPayload.error === "object" && "message" in errorPayload.error &&
+      typeof errorPayload.error.message === "string"
+      ? errorPayload.error.message.slice(0, 300)
+      : undefined;
+    console.error("AI draft request failed:", {
+      status: response.status,
+      model,
+      message: errorMessage,
+    });
+
+    if (response.status !== 404) {
+      throw new AiDraftError("generation_failed", "The AI service could not generate this draft.");
+    }
+
+    if (!discoveryAttempted) {
+      discoveryAttempted = true;
+      const discovered = await discoverGeminiModels(args.apiKey);
+      candidates = [...candidates, ...discovered, ...DEFAULT_GEMINI_MODELS]
+        .filter((candidate, index, values) => values.indexOf(candidate) === index);
+    }
+  }
+
+  throw new AiDraftError("generation_failed", "No compatible Gemini text model is available for this API key.");
+}
+
 export async function generateAiDraft(input: {
   headline: string;
   sourceName: string;
@@ -177,7 +280,8 @@ export async function generateAiDraft(input: {
     throw new AiDraftError("not_configured", "Add GEMINI_API_KEY to the server environment first.");
   }
 
-  const model = process.env.GEMINI_ARTICLE_MODEL?.trim() || "gemini-2.5-flash";
+  const configuredModel = normalizeGeminiModel(process.env.GEMINI_ARTICLE_MODEL);
+  const models = configuredModel ? [configuredModel] : [...DEFAULT_GEMINI_MODELS];
   const source = await fetchSourceText(input.sourceUrl);
   const instructions = [
     "You are AvenBrief's careful editorial drafting assistant.",
@@ -216,15 +320,7 @@ export async function generateAiDraft(input: {
       warnings: { type: "array", maxItems: 10, items: { type: "string" } },
     },
   };
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
-  const response = await fetch(endpoint, {
-    method: "POST",
-    signal: AbortSignal.timeout(60_000),
-    headers: {
-      "x-goog-api-key": apiKey,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
+  const requestBody = JSON.stringify({
       systemInstruction: { parts: [{ text: instructions }] },
       contents: [{ role: "user", parts: [{ text: sourceInput }] }],
       generationConfig: {
@@ -233,17 +329,8 @@ export async function generateAiDraft(input: {
         responseMimeType: "application/json",
         responseJsonSchema: schema,
       },
-    }),
-  }).catch(() => null);
-
-  if (!response) {
-    throw new AiDraftError("generation_failed", "The AI service did not respond in time.");
-  }
-  if (!response.ok) {
-    const requestId = response.headers.get("x-request-id");
-    console.error("AI draft request failed:", { status: response.status, requestId });
-    throw new AiDraftError("generation_failed", "The AI service could not generate this draft.");
-  }
+    });
+  const { response, model } = await requestGeminiDraft({ apiKey, models, body: requestBody });
 
   const payload: unknown = await response.json();
   const output = responseText(payload);

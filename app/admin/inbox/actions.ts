@@ -215,7 +215,7 @@ export async function createAiDraft(formData: FormData) {
     redirect(`/admin/editor?id=${story.article_id}`);
   }
 
-  const configuredModel = process.env.GEMINI_ARTICLE_MODEL?.trim() || "gemini-2.5-flash";
+  const configuredModel = process.env.GEMINI_ARTICLE_MODEL?.trim() || "gemini-flash-lite-latest";
   const { data: generation, error: generationError } = await supabase
     .from("ai_draft_generations")
     .insert({

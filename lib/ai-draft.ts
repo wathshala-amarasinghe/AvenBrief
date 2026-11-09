@@ -13,9 +13,10 @@ const FETCH_TIMEOUT_MS = 15_000;
 const ALLOWED_CATEGORIES = ["World", "Technology", "Climate", "Finance", "Gaming"];
 const GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta";
 const DEFAULT_GEMINI_MODELS = [
-  "gemini-2.5-flash",
-  "gemini-2.5-flash-lite",
-  "gemini-2.0-flash",
+  "gemini-flash-lite-latest",
+  "gemini-3.5-flash-lite",
+  "gemini-3.8-flash",
+  "gemini-flash-latest",
 ];
 
 export type AiDraft = {

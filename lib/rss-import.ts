@@ -1,6 +1,10 @@
 import "server-only";
 
 import { getHeadlinesFromSource } from "@/lib/rss";
+import {
+  canonicalizeStoryUrl,
+  createStoryFingerprint,
+} from "@/lib/rss-story-dedup.mjs";
 import { getAdminSupabase } from "@/lib/supabase-admin";
 
 export type RssImportRunType = "manual" | "scheduled";
@@ -25,6 +29,7 @@ type RssSource = {
   name: string;
   feed_url: string;
   default_category: string;
+  max_items_per_import: number;
 };
 
 function errorMessage(error: unknown) {
@@ -157,7 +162,7 @@ export async function runRssImport(
   try {
     const { data, error: sourcesError } = await supabase
       .from("rss_sources")
-      .select("id, name, feed_url, default_category")
+      .select("id, name, feed_url, default_category, max_items_per_import")
       .eq("enabled", true)
       .order("name");
 
@@ -195,36 +200,89 @@ export async function runRssImport(
       let newItems = 0;
 
       try {
-        const headlines = await getHeadlinesFromSource(source.feed_url);
+        const headlines = (await getHeadlinesFromSource(source.feed_url)).slice(
+          0,
+          source.max_items_per_import,
+        );
         itemsFound = headlines.length;
 
-        const rows = headlines.map((story) => {
+        const candidateRows = headlines.map((story) => {
           const publishedTime = Date.parse(story.publishedAt);
           const suggestedCategory = story.suggestedCategory === "World"
             ? source.default_category
             : story.suggestedCategory;
+          const canonicalUrl = canonicalizeStoryUrl(story.url);
 
           return {
             source_id: source.id,
             title: story.title,
             source_name: source.name,
-            source_url: story.url,
+            source_url: canonicalUrl,
             source_author: story.author,
             source_published_at: Number.isFinite(publishedTime)
               ? new Date(publishedTime).toISOString()
               : null,
             suggested_category: suggestedCategory,
+            story_fingerprint: createStoryFingerprint({
+              title: story.title,
+              publishedAt: story.publishedAt,
+            }),
             status: "new",
           };
         });
 
+        const seenUrls = new Set<string>();
+        const seenFingerprints = new Set<string>();
+        const uniqueCandidates = candidateRows.filter((row) => {
+          if (seenUrls.has(row.source_url)) return false;
+          if (row.story_fingerprint && seenFingerprints.has(row.story_fingerprint)) {
+            return false;
+          }
+
+          seenUrls.add(row.source_url);
+          if (row.story_fingerprint) seenFingerprints.add(row.story_fingerprint);
+          return true;
+        });
+
+        const urls = uniqueCandidates.map((row) => row.source_url);
+        const fingerprints = uniqueCandidates
+          .map((row) => row.story_fingerprint)
+          .filter((value): value is string => Boolean(value));
+
+        const [existingUrlsResult, existingFingerprintsResult] = await Promise.all([
+          urls.length
+            ? supabase.from("rss_inbox").select("source_url").in("source_url", urls)
+            : Promise.resolve({ data: [], error: null }),
+          fingerprints.length
+            ? supabase
+                .from("rss_inbox")
+                .select("story_fingerprint")
+                .in("story_fingerprint", fingerprints)
+            : Promise.resolve({ data: [], error: null }),
+        ]);
+
+        if (existingUrlsResult.error) throw existingUrlsResult.error;
+        if (existingFingerprintsResult.error) throw existingFingerprintsResult.error;
+
+        const existingUrls = new Set(
+          (existingUrlsResult.data ?? []).map((row) => row.source_url),
+        );
+        const existingFingerprints = new Set(
+          (existingFingerprintsResult.data ?? [])
+            .map((row) => row.story_fingerprint)
+            .filter(Boolean),
+        );
+        const rows = uniqueCandidates.filter(
+          (row) =>
+            !existingUrls.has(row.source_url) &&
+            (!row.story_fingerprint ||
+              !existingFingerprints.has(row.story_fingerprint)),
+        );
+
         if (rows.length) {
           const { data: inserted, error: importError } = await supabase
             .from("rss_inbox")
-            .upsert(rows, {
-              onConflict: "source_url",
-              ignoreDuplicates: true,
-            })
+            .insert(rows)
             .select("id");
 
           if (importError) throw importError;

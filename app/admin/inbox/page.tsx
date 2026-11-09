@@ -13,6 +13,7 @@ import { suggestRssCategory } from "@/lib/rss-category.mjs";
 import { getAdminSupabase } from "@/lib/supabase-admin";
 import {
   archiveStories,
+  createAiDraft,
   createDraft,
   importRss,
   markReviewed,
@@ -160,6 +161,12 @@ async function InboxContent({ searchParams }: InboxPageProps) {
     invalid: "That story could not be identified.",
     category_required: "Choose a category before creating the draft.",
     draft_error: "The draft could not be created. Please try again.",
+    ai_not_configured: "AI drafting is not configured yet. Add OPENAI_API_KEY in Vercel, then redeploy.",
+    ai_source_unavailable: "The original article could not be read safely. Open the source and create a manual draft instead.",
+    ai_generation_failed: "The AI service could not create a valid draft. Please try again or create a manual draft.",
+    ai_insufficient_source: "The source did not contain enough reliable information for an AI draft.",
+    ai_running: "An AI draft is already being generated for this story.",
+    ai_setup_required: "Apply migration 20261109000300_ai_draft_generation.sql before using AI drafts.",
   };
   const notice = params.result ? notices[params.result] : "";
   const hasFilters = Boolean(
@@ -184,7 +191,7 @@ async function InboxContent({ searchParams }: InboxPageProps) {
 
         {notice && (
           <p
-            role={["database_error", "feed_error", "draft_error"].includes(params.result ?? "") ? "alert" : "status"}
+            role={["database_error", "feed_error", "draft_error"].includes(params.result ?? "") || (params.result ?? "").startsWith("ai_") ? "alert" : "status"}
             className="mt-5 rounded-xl bg-soft p-4 text-sm text-brand"
           >
             {notice}
@@ -289,16 +296,26 @@ async function InboxContent({ searchParams }: InboxPageProps) {
                   ) : view === "archived" ? (
                     <p className="text-sm text-muted">Restore this story before creating a draft.</p>
                   ) : (
-                    <form action={createDraft} className="flex flex-wrap items-end gap-3">
-                      <input type="hidden" name="id" value={selected.id} />
-                      <label className="flex-1 text-sm font-medium">Draft category
-                        <select name="category" defaultValue={selected.suggested_category ?? ""} required className="mt-2 w-full rounded-lg border border-border bg-white px-4 py-3">
-                          <option value="" disabled>Choose a category</option>
-                          {categories.map((category) => <option key={category.slug} value={category.name}>{category.name}{selected.suggested_category === category.name ? " (suggested)" : ""}</option>)}
-                        </select>
-                      </label>
-                      <SubmitButton pendingText="Creating…">Create draft</SubmitButton>
-                    </form>
+                    <div>
+                      <form action={createAiDraft}>
+                        <input type="hidden" name="id" value={selected.id} />
+                        <p className="mb-3 text-sm text-muted">AI reads the original, writes an editable article and saves it privately. It never publishes automatically.</p>
+                        <SubmitButton pendingText="Writing AI draft…">Generate AI draft</SubmitButton>
+                      </form>
+                      <details className="mt-5 border-t border-border pt-4">
+                        <summary className="cursor-pointer text-sm font-medium text-brand">Create a blank draft instead</summary>
+                        <form action={createDraft} className="mt-4 flex flex-wrap items-end gap-3">
+                          <input type="hidden" name="id" value={selected.id} />
+                          <label className="flex-1 text-sm font-medium">Draft category
+                            <select name="category" defaultValue={selected.suggested_category ?? ""} required className="mt-2 w-full rounded-lg border border-border bg-white px-4 py-3">
+                              <option value="" disabled>Choose a category</option>
+                              {categories.map((category) => <option key={category.slug} value={category.name}>{category.name}{selected.suggested_category === category.name ? " (suggested)" : ""}</option>)}
+                            </select>
+                          </label>
+                          <SubmitButton pendingText="Creating…">Create blank draft</SubmitButton>
+                        </form>
+                      </details>
+                    </div>
                   )}
                 </div>
                 {view === "new" && (

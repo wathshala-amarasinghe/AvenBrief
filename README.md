@@ -2,6 +2,8 @@
 
 AvenBrief is a review-first news publication built with Next.js 16, Supabase, and Tailwind CSS. Public pages show only published articles. RSS imports remain private until an administrator reviews them and creates an editorial draft.
 
+Administrators can optionally generate an AI-assisted draft from a readable original article. AI output is always saved privately and must still be reviewed and explicitly published.
+
 ## Local setup
 
 1. Install dependencies with `npm ci`.
@@ -20,6 +22,8 @@ The public site is available at `http://localhost:3000`. The protected admin are
 - `ADMIN_USER_ID`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `CRON_SECRET`
+- `OPENAI_API_KEY` (required only for AI draft generation)
+- `OPENAI_ARTICLE_MODEL` (optional; defaults to `gpt-6-luna`)
 
 Never commit `.env.local` or expose the service-role key and cron secret to client code.
 
@@ -38,7 +42,7 @@ Production deploys from the `main` branch to Vercel. `vercel.json` schedules the
 
 Set `NEXT_PUBLIC_SITE_URL` to the production origin, without a trailing path. It controls canonical URLs, the sitemap, robots metadata, and social-sharing links.
 
-See `docs/article-editor.md` and `docs/rss-inbox.md` for editorial workflow details.
+See `docs/article-editor.md`, `docs/rss-inbox.md`, and `docs/ai-drafts.md` for editorial workflow details.
 
 ## Monitoring
 

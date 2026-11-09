@@ -5,8 +5,8 @@ AI drafting is an optional admin-only step for an imported RSS story. It reads t
 ## Setup
 
 1. Apply `supabase/migrations/20261109000300_ai_draft_generation.sql`.
-2. Add `OPENAI_API_KEY` to `.env.local` and the Vercel Production environment.
-3. Optionally set `OPENAI_ARTICLE_MODEL`. The default is `gpt-6-luna`.
+2. Add `GEMINI_API_KEY` to `.env.local` and the Vercel Production environment.
+3. Optionally set `GEMINI_ARTICLE_MODEL`. The default is `gemini-2.5-flash`.
 4. Redeploy after changing Vercel environment variables.
 
 The API key is server-only. Do not prefix it with `NEXT_PUBLIC_`, commit it, paste it into an article, or expose it in screenshots.
@@ -26,6 +26,6 @@ If the publisher blocks automated reading or exposes too little article text, us
 
 - Original-source pages are treated as untrusted input and cannot provide instructions to the model.
 - Private-network URLs, unusual ports, oversized responses, unsupported content types, and excessive redirects are blocked.
-- OpenAI response storage is disabled for these requests.
+- Only public publisher text and story metadata are sent to Gemini. Never include passwords, private notes, or personal information in source content.
 - Generated drafts are validated before they reach the article table.
 - The generation audit table is inaccessible to browser clients.

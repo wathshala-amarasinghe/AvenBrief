@@ -7,6 +7,7 @@ const valid = {
   feed_url: "https://globalvoices.org/feed/",
   default_category: "World",
   enabled: "on",
+  max_items_per_import: "6",
 };
 
 test("approved HTTPS source settings are normalised", () => {
@@ -22,6 +23,7 @@ test("approved HTTPS source settings are normalised", () => {
     feed_url: "https://globalvoices.org/feed/",
     default_category: "World",
     enabled: true,
+    max_items_per_import: 6,
   });
 });
 
@@ -51,4 +53,27 @@ test("disabled sources remain valid", () => {
   const result = validateRssSource({ ...valid, enabled: undefined });
   assert.equal(result.ok, true);
   assert.equal(result.value.enabled, false);
+});
+
+test("per-run item limits stay within the supported range", () => {
+  assert.equal(
+    validateRssSource({ ...valid, max_items_per_import: "1" }).ok,
+    true,
+  );
+  assert.equal(
+    validateRssSource({ ...valid, max_items_per_import: "12" }).ok,
+    true,
+  );
+  assert.equal(
+    validateRssSource({ ...valid, max_items_per_import: "0" }).ok,
+    false,
+  );
+  assert.equal(
+    validateRssSource({ ...valid, max_items_per_import: "13" }).ok,
+    false,
+  );
+  assert.equal(
+    validateRssSource({ ...valid, max_items_per_import: "6 stories" }).ok,
+    false,
+  );
 });

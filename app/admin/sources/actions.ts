@@ -89,13 +89,14 @@ export async function updateSource(formData: FormData) {
     );
   }
 
-  const { name, feed_url, default_category } = result.value;
+  const { name, feed_url, default_category, max_items_per_import } = result.value;
   const { error } = await getAdminSupabase()
     .from("rss_sources")
     .update({
       name,
       feed_url,
       default_category,
+      max_items_per_import,
       updated_at: new Date().toISOString(),
     })
     .eq("id", id);

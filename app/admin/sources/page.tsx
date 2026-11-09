@@ -36,6 +36,14 @@ function formatTimestamp(value: string | null) {
   }).format(new Date(value)) + " UTC";
 }
 
+function sourceDomain(value: string) {
+  try {
+    return new URL(value).hostname.replace(/^www\./, "");
+  } catch {
+    return value;
+  }
+}
+
 async function SourcesContent({ searchParams }: SourcesPageProps) {
   await connection();
   const { user } = await requireAdmin();
@@ -46,7 +54,7 @@ async function SourcesContent({ searchParams }: SourcesPageProps) {
     supabase
       .from("rss_sources")
       .select(
-        "id, name, feed_url, default_category, enabled, last_checked_at, last_success_at, last_error, last_import_count",
+        "id, name, feed_url, default_category, max_items_per_import, enabled, last_checked_at, last_success_at, last_error, last_import_count",
       )
       .order("enabled", { ascending: false })
       .order("name"),
@@ -97,6 +105,16 @@ async function SourcesContent({ searchParams }: SourcesPageProps) {
   const noticeIsError = ["duplicate", "database_error", "invalid"].includes(
     params.result ?? "",
   );
+  const enabledSources = sources?.filter((source) => source.enabled) ?? [];
+  const coveredCategories = new Set(
+    enabledSources.map((source) => source.default_category),
+  );
+  const missingCategories = categories.filter(
+    (category) => !coveredCategories.has(category.name),
+  );
+  const healthySources = enabledSources.filter(
+    (source) => source.last_success_at && !source.last_error,
+  ).length;
 
   return (
     <AdminShell current="/admin/sources" email={user.email}>
@@ -125,6 +143,55 @@ async function SourcesContent({ searchParams }: SourcesPageProps) {
         >
           {notice}
         </p>
+      )}
+
+      {!error && (
+        <section aria-label="Source coverage" className="mt-8">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-xl border border-border bg-white p-5">
+              <p className="text-sm text-muted">Enabled publishers</p>
+              <p className="mt-2 font-serif text-3xl font-semibold">{enabledSources.length}</p>
+            </div>
+            <div className="rounded-xl border border-border bg-white p-5">
+              <p className="text-sm text-muted">Category coverage</p>
+              <p className="mt-2 font-serif text-3xl font-semibold">
+                {coveredCategories.size}/{categories.length}
+              </p>
+            </div>
+            <div className="rounded-xl border border-border bg-white p-5">
+              <p className="text-sm text-muted">Healthy sources</p>
+              <p className="mt-2 font-serif text-3xl font-semibold">
+                {healthySources}/{enabledSources.length}
+              </p>
+            </div>
+            <div className="rounded-xl border border-border bg-white p-5">
+              <p className="text-sm text-muted">Daily publishing target</p>
+              <p className="mt-2 font-serif text-3xl font-semibold">2–5</p>
+            </div>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {categories.map((category) => {
+              const covered = coveredCategories.has(category.name);
+              return (
+                <span
+                  key={category.slug}
+                  className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                    covered
+                      ? "bg-green-50 text-green-700"
+                      : "bg-amber-50 text-amber-800"
+                  }`}
+                >
+                  {category.name} · {covered ? "covered" : "missing"}
+                </span>
+              );
+            })}
+          </div>
+          {missingCategories.length > 0 && (
+            <p className="mt-4 rounded-xl bg-amber-50 p-4 text-sm text-amber-900">
+              Add or enable a source for {missingCategories.map((category) => category.name).join(", ")}.
+            </p>
+          )}
+        </section>
       )}
 
       <section className="mt-10 rounded-xl border border-border p-6">
@@ -179,6 +246,23 @@ async function SourcesContent({ searchParams }: SourcesPageProps) {
             />
           </div>
 
+          <div>
+            <label htmlFor="new-source-limit" className="mb-2 block text-sm font-medium">
+              Maximum new stories per import
+            </label>
+            <input
+              id="new-source-limit"
+              name="max_items_per_import"
+              type="number"
+              min={1}
+              max={12}
+              defaultValue={6}
+              required
+              className="w-full rounded-xl border border-border px-4 py-3"
+            />
+            <p className="mt-2 text-xs text-muted">Use a small limit to keep the review queue manageable.</p>
+          </div>
+
           <label className="flex items-center gap-3 text-sm">
             <input name="enabled" type="checkbox" defaultChecked />
             Enable this source immediately
@@ -216,7 +300,7 @@ async function SourcesContent({ searchParams }: SourcesPageProps) {
                     rel="noopener noreferrer"
                     className="mt-2 block break-all text-sm text-brand hover:underline"
                   >
-                    {source.feed_url}
+                    {sourceDomain(source.feed_url)}
                   </a>
                 </div>
 
@@ -233,14 +317,18 @@ async function SourcesContent({ searchParams }: SourcesPageProps) {
                 </form>
               </div>
 
-              <dl className="mt-6 grid gap-4 text-sm sm:grid-cols-3">
+              <dl className="mt-6 grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
+                <div>
+                  <dt className="text-muted">Fallback category</dt>
+                  <dd className="mt-1">{source.default_category}</dd>
+                </div>
+                <div>
+                  <dt className="text-muted">Per-run limit</dt>
+                  <dd className="mt-1">{source.max_items_per_import} stories</dd>
+                </div>
                 <div>
                   <dt className="text-muted">Last checked</dt>
                   <dd className="mt-1">{formatTimestamp(source.last_checked_at)}</dd>
-                </div>
-                <div>
-                  <dt className="text-muted">Last successful check</dt>
-                  <dd className="mt-1">{formatTimestamp(source.last_success_at)}</dd>
                 </div>
                 <div>
                   <dt className="text-muted">New items last time</dt>
@@ -298,6 +386,21 @@ async function SourcesContent({ searchParams }: SourcesPageProps) {
                       defaultValue={source.feed_url}
                       required
                       maxLength={2048}
+                      className="w-full rounded-xl border border-border px-4 py-3"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor={`source-limit-${source.id}`} className="mb-2 block text-sm font-medium">
+                      Maximum new stories per import
+                    </label>
+                    <input
+                      id={`source-limit-${source.id}`}
+                      name="max_items_per_import"
+                      type="number"
+                      min={1}
+                      max={12}
+                      defaultValue={source.max_items_per_import}
+                      required
                       className="w-full rounded-xl border border-border px-4 py-3"
                     />
                   </div>

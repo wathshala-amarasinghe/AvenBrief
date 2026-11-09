@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
+import { getAdminSupabase } from "@/lib/supabase-admin";
 import { isArticleId, validateArticle } from "@/lib/article-validation.mjs";
 import type { EditorState } from "@/lib/article-types";
 
@@ -10,7 +11,8 @@ export async function saveArticle(
   _previousState: EditorState,
   formData: FormData,
 ): Promise<EditorState> {
-  const { supabase } = await requireAdmin();
+  await requireAdmin();
+  const supabase = getAdminSupabase();
   const result = validateArticle(Object.fromEntries(formData.entries()));
 
   if (!result.ok) return { error: result.error };

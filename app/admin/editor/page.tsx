@@ -25,7 +25,8 @@ type EditorPageProps = {
 
 async function EditorContent({ searchParams }: EditorPageProps) {
   await connection();
-  const { supabase, user } = await requireAdmin();
+  const { user } = await requireAdmin();
+  const supabase = getAdminSupabase();
   const params = await searchParams;
   const id = params.id;
 
@@ -47,7 +48,7 @@ async function EditorContent({ searchParams }: EditorPageProps) {
     article = data as ArticleRecord;
 
     if (params.generated === "1") {
-      const { data: generated } = await getAdminSupabase()
+      const { data: generated } = await supabase
         .from("ai_draft_generations")
         .select("confidence, warnings")
         .eq("article_id", id)

@@ -14,7 +14,10 @@ export type ScheduledDraftSummary = {
   skippedReason: "disabled" | "not_configured" | "no_new_items" | null;
 };
 
-export async function runScheduledAiDrafts(importedItemIds: string[]): Promise<ScheduledDraftSummary> {
+export async function runScheduledAiDrafts(
+  importedItemIds: string[],
+  importRunId: string | null,
+): Promise<ScheduledDraftSummary> {
   const empty = {
     enabled: false,
     attempted: 0,
@@ -51,7 +54,10 @@ export async function runScheduledAiDrafts(importedItemIds: string[]): Promise<S
   };
 
   for (const inboxId of selectedIds) {
-    const result = await createVerifiedAiDraft(inboxId);
+    const result = await createVerifiedAiDraft(inboxId, {
+      triggerType: "scheduled",
+      importRunId,
+    });
     if (result.status !== "created") {
       if (result.status !== "existing") summary.failed += 1;
       continue;

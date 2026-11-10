@@ -5,6 +5,7 @@ import { createArticleSlug } from "@/lib/ai-draft-validation.mjs";
 import { isArticleId } from "@/lib/article-validation.mjs";
 import { runArticleVerification, type ArticleVerificationRunStatus } from "@/lib/run-article-verification";
 import { getAdminSupabase } from "@/lib/supabase-admin";
+import { sanitiseErrorMessage } from "@/lib/error-reporting.mjs";
 
 export type AiDraftWorkflowResult =
   | { status: "created"; articleId: string; verificationStatus: ArticleVerificationRunStatus }
@@ -13,7 +14,10 @@ export type AiDraftWorkflowResult =
   | { status: "setup_required" }
   | { status: "failed"; resultCode: string };
 
-export async function createVerifiedAiDraft(inboxId: string): Promise<AiDraftWorkflowResult> {
+export async function createVerifiedAiDraft(
+  inboxId: string,
+  options: { triggerType?: "manual" | "scheduled"; importRunId?: string | null } = {},
+): Promise<AiDraftWorkflowResult> {
   const supabase = getAdminSupabase();
   const { data: story, error: storyError } = await supabase
     .from("rss_inbox")
@@ -32,7 +36,14 @@ export async function createVerifiedAiDraft(inboxId: string): Promise<AiDraftWor
   const configuredModel = process.env.GEMINI_ARTICLE_MODEL?.trim() || "gemini-flash-lite-latest";
   const { data: generation, error: generationError } = await supabase
     .from("ai_draft_generations")
-    .insert({ inbox_id: story.id, provider: "google", model: configuredModel, status: "running" })
+    .insert({
+      inbox_id: story.id,
+      provider: "google",
+      model: configuredModel,
+      status: "running",
+      trigger_type: options.triggerType ?? "manual",
+      import_run_id: options.importRunId ?? null,
+    })
     .select("id")
     .single();
 
@@ -95,7 +106,9 @@ export async function createVerifiedAiDraft(inboxId: string): Promise<AiDraftWor
     const verificationStatus = await runArticleVerification(articleId);
     return { status: "created", articleId, verificationStatus };
   } catch (error) {
-    const message = error instanceof Error ? error.message.slice(0, 500) : "AI draft generation failed.";
+    const message = sanitiseErrorMessage(
+      error instanceof Error ? error : "AI draft generation failed.",
+    ).slice(0, 500);
     await supabase
       .from("ai_draft_generations")
       .update({ status: "failed", error: message, completed_at: new Date().toISOString() })

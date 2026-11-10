@@ -15,6 +15,6 @@ test("scheduled AI drafting accepts only the supported per-run limits", () => {
 });
 
 test("scheduled ingestion passes only newly imported stories to automatic drafting", () => {
-  assert.match(ingestRoute, /runScheduledAiDrafts\(summary\.importedItemIds\)/);
+  assert.match(ingestRoute, /runScheduledAiDrafts\(summary\.importedItemIds, summary\.runId\)/);
   assert.match(ingestRoute, /const summary = await runRssImport\("scheduled"\)/);
 });

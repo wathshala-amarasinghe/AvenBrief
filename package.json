@@ -20,7 +20,7 @@
     "check:client-secrets": "node scripts/check-client-secrets.mjs",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --test tests/admin-editor-access.test.mjs tests/ai-draft-validation.test.mjs tests/article-verification.test.mjs tests/article-validation.test.mjs tests/article-browse.test.mjs tests/article-image-upload.test.mjs tests/editorial-analytics.test.mjs tests/error-reporting.test.mjs tests/rss-category.test.mjs tests/rss-source-validation.test.mjs tests/rss-story-dedup.test.mjs tests/scheduled-ai-drafts.test.mjs tests/security-headers.test.mjs tests/structured-data.test.mjs"
+    "test": "node --test tests/admin-editor-access.test.mjs tests/ai-draft-validation.test.mjs tests/article-verification.test.mjs tests/article-validation.test.mjs tests/article-browse.test.mjs tests/article-image-upload.test.mjs tests/automation-monitoring.test.mjs tests/editorial-analytics.test.mjs tests/error-reporting.test.mjs tests/rss-category.test.mjs tests/rss-source-validation.test.mjs tests/rss-story-dedup.test.mjs tests/scheduled-ai-drafts.test.mjs tests/security-headers.test.mjs tests/structured-data.test.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

@@ -41,12 +41,13 @@ async function handleIngest(request: Request) {
 
   try {
     const summary = await runRssImport("scheduled");
-    const drafting = await runScheduledAiDrafts(summary.importedItemIds);
+    const drafting = await runScheduledAiDrafts(summary.importedItemIds, summary.runId);
     const { importedItemIds: _importedItemIds, ...publicSummary } = summary;
     void _importedItemIds;
 
     revalidatePath("/admin");
     revalidatePath("/admin/analytics");
+    revalidatePath("/admin/automation");
     revalidatePath("/admin/inbox");
     revalidatePath("/admin/sources");
     revalidatePath("/admin/editor");

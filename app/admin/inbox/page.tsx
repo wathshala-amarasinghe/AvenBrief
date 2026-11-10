@@ -25,6 +25,8 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+export const maxDuration = 300;
+
 type InboxPageProps = {
   searchParams: Promise<{
     result?: string;
@@ -300,7 +302,7 @@ async function InboxContent({ searchParams }: InboxPageProps) {
                       <form action={createAiDraft}>
                         <input type="hidden" name="id" value={selected.id} />
                         <p className="mb-3 text-sm text-muted">AI reads the original, writes an editable article and saves it privately. It never publishes automatically.</p>
-                        <SubmitButton pendingText="Writing AI draft…">Generate AI draft</SubmitButton>
+                        <SubmitButton pendingText="Writing and verifying draft…">Generate AI draft</SubmitButton>
                       </form>
                       <details className="mt-5 border-t border-border pt-4">
                         <summary className="cursor-pointer text-sm font-medium text-brand">Create a blank draft instead</summary>

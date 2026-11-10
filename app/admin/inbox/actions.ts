@@ -8,6 +8,7 @@ import { runRssImport } from "@/lib/rss-import";
 import { isArticleId } from "@/lib/article-validation.mjs";
 import { AiDraftError, generateAiDraft } from "@/lib/ai-draft";
 import { createArticleSlug } from "@/lib/ai-draft-validation.mjs";
+import { runArticleVerification } from "@/lib/run-article-verification";
 
 function selectedStoryIds(formData: FormData) {
   return Array.from(
@@ -285,11 +286,13 @@ export async function createAiDraft(formData: FormData) {
       console.error("AI draft history completion failed:", historyError);
     }
 
+    const verificationStatus = await runArticleVerification(articleId);
+
     revalidatePath("/admin");
     revalidatePath("/admin/analytics");
     revalidatePath("/admin/inbox");
     revalidatePath("/admin/editor");
-    redirect(`/admin/editor?id=${articleId}&generated=1`);
+    redirect(`/admin/editor?id=${articleId}&generated=1&verification=${verificationStatus}`);
   } catch (error) {
     if (error && typeof error === "object" && "digest" in error &&
       String(error.digest).startsWith("NEXT_REDIRECT")) {

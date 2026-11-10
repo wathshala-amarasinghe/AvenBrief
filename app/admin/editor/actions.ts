@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
 import { getAdminSupabase } from "@/lib/supabase-admin";
 import { isArticleId, validateArticle } from "@/lib/article-validation.mjs";
+import { articleVerificationFingerprint } from "@/lib/article-verification";
 import type { EditorState } from "@/lib/article-types";
 
 export async function saveArticle(
@@ -40,6 +41,35 @@ export async function saveArticle(
   }
 
   const { intent, ...values } = result.value;
+
+  if (intent === "publish" && values.source_url) {
+    if (!id) {
+      return { error: "Save this article as a draft, run automated verification, then publish it." };
+    }
+
+    const fingerprint = articleVerificationFingerprint(values);
+    const { data: verification, error: verificationError } = await supabase
+      .from("article_verifications")
+      .select("publish_ready")
+      .eq("article_id", id)
+      .eq("status", "completed")
+      .eq("article_fingerprint", fingerprint)
+      .order("started_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (verificationError) {
+      console.error("Article verification lookup failed:", verificationError);
+      return { error: "Automated verification is not ready. Apply the article-verification migration and try again." };
+    }
+    if (!verification) {
+      return { error: "This exact article version has not been verified. Save your changes and run automated verification before publishing." };
+    }
+    if (!verification.publish_ready) {
+      return { error: "Verification found issues that block publishing. Correct the flagged claims, save, and verify again." };
+    }
+  }
+
   const status = intent === "publish" ? "published" : "draft";
   const record = {
     ...values,

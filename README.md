@@ -22,7 +22,7 @@ The public site is available at `http://localhost:3000`. The protected admin are
 - `ADMIN_USER_ID`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `CRON_SECRET`
-- `GEMINI_API_KEY` (required only for AI draft generation)
+- `GEMINI_API_KEY` (required for AI drafting and automated source-consistency verification)
 - `GEMINI_ARTICLE_MODEL` (optional; defaults to `gemini-2.5-flash`)
 
 Never commit `.env.local` or expose the service-role key and cron secret to client code.

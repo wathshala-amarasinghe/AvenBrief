@@ -67,7 +67,7 @@ export default function PrivacyPage() {
           AvenBrief relies on service providers, including Vercel for website
           hosting, Supabase for database and administrator authentication, and
           Google Gemini for optional AI-assisted drafting from public publisher
-          material, and Resend for administrator-requested operational email
+          material, and Gmail for administrator-requested operational email
           alerts. Reader contact messages and administrator credentials are
           not intentionally sent to the drafting service. These providers may
           process limited information under their own terms and privacy

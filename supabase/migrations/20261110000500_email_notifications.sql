@@ -40,6 +40,6 @@ comment on table public.admin_notification_preferences is
 'Server-only delivery preferences for AvenBrief operational email notifications.';
 
 comment on column public.admin_notifications.email_sent_at is
-'Set after Resend accepts the notification email. The notification UUID is also used as the provider idempotency key.';
+'Set after the configured mail transport accepts the notification email. The unique notification row prevents duplicate delivery attempts.';
 
 commit;

@@ -10,6 +10,7 @@ import { toggleImportPause, updateAiDraftAutomation } from "@/app/admin/sources/
 import { sendTestNotificationEmail, updateEmailNotificationPreferences } from "./actions";
 
 export const metadata: Metadata = { title: "Settings | AvenBrief", robots: { index: false, follow: false } };
+export const maxDuration = 30;
 
 type SettingsPageProps = {
   searchParams: Promise<{ result?: string | string[] }>;
@@ -53,7 +54,7 @@ async function SettingsContent({ searchParams }: SettingsPageProps) {
               : result === "notification_test_requested"
                 ? "Test notification created. Check Notifications for its email delivery status."
                 : result === "notification_email_not_configured"
-                  ? "Add the Resend environment variables and redeploy before sending a test."
+                  ? "Add the Gmail environment variables and redeploy before sending a test."
                   : result === "notification_email_disabled"
                     ? "Enable email delivery and save a valid recipient before sending a test."
                     : result === "notification_email_no_events"
@@ -107,18 +108,18 @@ async function SettingsContent({ searchParams }: SettingsPageProps) {
         <section className="mt-6 overflow-hidden rounded-[10px] border border-border bg-white">
           <div className="border-b border-border px-6 py-5">
             <h2 className="font-serif text-2xl font-semibold">Email notifications</h2>
-            <p className="mt-2 text-sm leading-6 text-muted">Send operational alerts through Resend. In-admin notifications remain available even when email is paused or unavailable.</p>
+            <p className="mt-2 text-sm leading-6 text-muted">Send low-volume operational alerts through Gmail. In-admin notifications remain available even when email is paused or unavailable.</p>
           </div>
           {notificationResult.error ? (
             <p role="alert" className="m-6 rounded-lg bg-amber-50 p-4 text-sm text-amber-900">Apply <code>20261110000500_email_notifications.sql</code> before configuring email alerts.</p>
           ) : (
             <form action={updateEmailNotificationPreferences} className="space-y-6 px-6 py-6">
               {!deliveryConfigured && (
-                <p role="status" className="rounded-lg bg-amber-50 p-4 text-sm leading-6 text-amber-900">Add <code>RESEND_API_KEY</code> and <code>NOTIFICATION_FROM_EMAIL</code> to Vercel, then redeploy. Preferences can be saved now, but no email will be sent until both variables exist.</p>
+                <p role="status" className="rounded-lg bg-amber-50 p-4 text-sm leading-6 text-amber-900">Add <code>GMAIL_USER</code> and <code>GMAIL_APP_PASSWORD</code> to Vercel, then redeploy. Use a Google App Password, not your normal Gmail password.</p>
               )}
               <label className="flex items-start gap-3">
                 <input name="email_enabled" type="checkbox" defaultChecked={notificationPreferences?.email_enabled ?? false} className="mt-1 h-4 w-4" />
-                <span><span className="block font-medium">Enable operational email</span><span className="mt-1 block text-sm text-muted">Delivery status: {deliveryConfigured ? "Resend configured" : "Server credentials missing"}</span></span>
+                <span><span className="block font-medium">Enable operational email</span><span className="mt-1 block text-sm text-muted">Delivery status: {deliveryConfigured ? "Gmail configured" : "Server credentials missing"}</span></span>
               </label>
               <label className="block max-w-xl text-sm font-medium">Recipient email
                 <input name="recipient_email" type="email" maxLength={254} required defaultValue={notificationPreferences?.recipient_email ?? user.email ?? ""} className="mt-2 w-full rounded-xl border border-border px-4 py-3" />

@@ -6,6 +6,7 @@ import { requireAdmin } from "@/lib/auth";
 import { isArticleId } from "@/lib/article-validation.mjs";
 import { getHeadlinesFromSource } from "@/lib/rss";
 import { validateRssSource } from "@/lib/rss-source-validation.mjs";
+import { parseScheduledDraftLimit } from "@/lib/scheduled-ai-draft-validation.mjs";
 import { getAdminSupabase } from "@/lib/supabase-admin";
 
 function logDatabaseError(context: string, error: {
@@ -179,4 +180,31 @@ export async function toggleImportPause(formData: FormData) {
   revalidatePath("/admin/sources");
   revalidatePath("/admin/settings");
   redirect(returnTo + "?result=" + (paused ? "imports_paused" : "imports_resumed"));
+}
+
+export async function updateAiDraftAutomation(formData: FormData) {
+  await requireAdmin();
+  const enabled = formData.get("auto_draft_enabled") === "on";
+  const limit = parseScheduledDraftLimit(formData.get("auto_draft_limit"));
+
+  if (limit === null) {
+    redirect("/admin/settings?result=invalid_ai_draft_settings");
+  }
+
+  const { error } = await getAdminSupabase()
+    .from("rss_import_settings")
+    .update({
+      auto_draft_enabled: enabled,
+      auto_draft_limit: limit,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", 1);
+
+  if (error) {
+    logDatabaseError("Scheduled AI drafting settings update failed:", error);
+    redirect("/admin/settings?result=ai_draft_settings_error");
+  }
+
+  revalidatePath("/admin/settings");
+  redirect("/admin/settings?result=ai_draft_settings_saved");
 }

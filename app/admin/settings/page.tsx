@@ -7,7 +7,7 @@ import { requireAdmin } from "@/lib/auth";
 import { getAdminSupabase } from "@/lib/supabase-admin";
 import { adminEmailDeliveryConfigured } from "@/lib/admin-notification-email";
 import { toggleImportPause, updateAiDraftAutomation } from "@/app/admin/sources/actions";
-import { updateEmailNotificationPreferences } from "./actions";
+import { sendTestNotificationEmail, updateEmailNotificationPreferences } from "./actions";
 
 export const metadata: Metadata = { title: "Settings | AvenBrief", robots: { index: false, follow: false } };
 
@@ -50,8 +50,16 @@ async function SettingsContent({ searchParams }: SettingsPageProps) {
             ? "Enter a valid notification email address."
             : result === "notification_settings_error"
               ? "Could not save email preferences. Apply the email-notifications migration and try again."
+              : result === "notification_test_requested"
+                ? "Test notification created. Check Notifications for its email delivery status."
+                : result === "notification_email_not_configured"
+                  ? "Add the Resend environment variables and redeploy before sending a test."
+                  : result === "notification_email_disabled"
+                    ? "Enable email delivery and save a valid recipient before sending a test."
+                    : result === "notification_email_no_events"
+                      ? "Select at least one email alert type before sending a test."
         : "";
-  const noticeIsError = ["invalid_ai_draft_settings", "ai_draft_settings_error", "invalid_notification_email", "notification_settings_error"].includes(result);
+  const noticeIsError = ["invalid_ai_draft_settings", "ai_draft_settings_error", "invalid_notification_email", "notification_settings_error", "notification_email_not_configured", "notification_email_disabled", "notification_email_no_events"].includes(result);
   const deliveryConfigured = adminEmailDeliveryConfigured();
 
   return (
@@ -133,7 +141,10 @@ async function SettingsContent({ searchParams }: SettingsPageProps) {
                   ))}
                 </div>
               </fieldset>
-              <SubmitButton pendingText="Saving…">Save email preferences</SubmitButton>
+              <div className="flex flex-wrap gap-3">
+                <SubmitButton pendingText="Saving…">Save email preferences</SubmitButton>
+                <button formAction={sendTestNotificationEmail} type="submit" className="rounded-lg border border-border bg-white px-5 py-3 text-sm font-medium hover:bg-soft">Send test email</button>
+              </div>
             </form>
           )}
         </section>

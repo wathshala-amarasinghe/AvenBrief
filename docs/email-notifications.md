@@ -9,6 +9,7 @@ AvenBrief can mirror selected in-admin notifications to one administrator email 
 3. Redeploy the application so the server functions receive the new variables.
 4. Open **Admin → Settings → Email notifications**.
 5. Enter the recipient, choose the alert types, enable delivery, and save.
+6. Select **Send test email**, then open **Admin → Notifications** to confirm whether Resend accepted the message.
 
 The production configuration also registers `/api/automation/health` at 02:00 UTC each day, two hours after the scheduled import. This independent check can create an overdue notification when the import cron has not completed within its expected window.
 

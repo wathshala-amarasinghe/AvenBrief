@@ -26,6 +26,10 @@ Apply `supabase/migrations/20261110000100_scheduled_ai_drafts.sql`, then open **
 
 Pausing RSS imports also prevents scheduled drafting because no new stories are imported. The separate automatic-drafting switch can stop AI generation while leaving RSS importing active.
 
+## Monitoring
+
+Apply `supabase/migrations/20261110000200_ai_automation_monitoring.sql`, then open **Admin → Automation**. The monitor links each scheduled import to its draft attempts and shows imported stories, created drafts, verification outcomes, failures, quota/configuration warnings, and links to private drafts. Stored error messages are redacted before display.
+
 If the publisher blocks automated reading or exposes too little article text, use **Create a blank draft instead**. The application deliberately refuses to generate from a headline alone.
 
 ## Safety boundaries

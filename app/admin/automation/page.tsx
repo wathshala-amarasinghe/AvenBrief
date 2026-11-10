@@ -17,8 +17,8 @@ function formatTimestamp(value?: string | null) {
   return new Intl.DateTimeFormat("en", {
     dateStyle: "medium",
     timeStyle: "short",
-    timeZone: "UTC",
-  }).format(new Date(value)) + " UTC";
+    timeZone: "Asia/Colombo",
+  }).format(new Date(value)) + " Sri Lanka time";
 }
 
 function stateStyle(value: string) {

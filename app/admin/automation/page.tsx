@@ -7,6 +7,7 @@ import { requireAdmin } from "@/lib/auth";
 import { buildAutomationMonitoring } from "@/lib/automation-monitoring.mjs";
 import { getAdminSupabase } from "@/lib/supabase-admin";
 import { ensureAutomationHealthNotification } from "@/lib/admin-notifications";
+import AutomationLiveRefresh from "@/components/automation-live-refresh";
 
 export const metadata: Metadata = {
   title: "Automation Monitor | AvenBrief",
@@ -85,6 +86,7 @@ async function AutomationContent() {
     verifications: verificationsResult.data ?? [],
   });
   const settings = settingsResult.data;
+  const runIsActive = monitoring.latestRun?.status === "running";
 
   return (
     <AdminShell current="/admin/automation" email={user.email}>
@@ -123,7 +125,7 @@ async function AutomationContent() {
         </section>
 
         <section className="mt-6 grid gap-4 md:grid-cols-3">
-          <article className="rounded-xl border border-border bg-white p-5"><p className="text-sm text-muted">Latest scheduled import</p><p className="mt-2 font-medium">{formatTimestamp(monitoring.latestRun?.started_at)}</p><p className="mt-1 text-xs capitalize text-muted">Status: {monitoring.latestRun?.status ?? "No run"}</p></article>
+          <article className="rounded-xl border border-border bg-white p-5"><p className="text-sm text-muted">Latest scheduled import</p><p className="mt-2 font-medium">{formatTimestamp(monitoring.latestRun?.started_at)}</p><p className="mt-1 text-xs capitalize text-muted">Status: {monitoring.latestRun?.status ?? "No run"}</p><AutomationLiveRefresh active={runIsActive} /></article>
           <article className="rounded-xl border border-border bg-white p-5"><p className="text-sm text-muted">RSS automation</p><p className={`mt-2 font-medium ${settings?.paused ? "text-red-700" : "text-green-700"}`}>{settings?.paused ? "Paused" : "Active"}</p><p className="mt-1 text-xs text-muted">Controls importing and downstream drafting</p></article>
           <article className="rounded-xl border border-border bg-white p-5"><p className="text-sm text-muted">AI drafting</p><p className={`mt-2 font-medium ${settings?.auto_draft_enabled ? "text-green-700" : "text-red-700"}`}>{settings?.auto_draft_enabled ? "Active" : "Paused"}</p><p className="mt-1 text-xs text-muted">Limit: {settings?.auto_draft_limit ?? 1} per scheduled run</p></article>
         </section>

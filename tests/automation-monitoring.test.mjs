@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { buildAutomationMonitoring } from "../lib/automation-monitoring.mjs";
+import { readFile } from "node:fs/promises";
 
 test("automation monitoring reports exact outcomes for the latest scheduled run", () => {
   const result = buildAutomationMonitoring({
@@ -46,4 +47,14 @@ test("automation monitoring redacts secrets from saved failures", () => {
   });
 
   assert.equal(result.rows[0].error, "Bearer [redacted]");
+});
+
+test("automation monitor polls only while the latest run is active", async () => {
+  const page = await readFile(new URL("../app/admin/automation/page.tsx", import.meta.url), "utf8");
+  const liveRefresh = await readFile(new URL("../components/automation-live-refresh.tsx", import.meta.url), "utf8");
+
+  assert.match(page, /monitoring\.latestRun\?\.status === "running"/);
+  assert.match(page, /<AutomationLiveRefresh active=\{runIsActive\}/);
+  assert.match(liveRefresh, /if \(!active\) return/);
+  assert.match(liveRefresh, /router\.refresh\(\)/);
 });

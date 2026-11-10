@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { buildNotificationEmail } from "../lib/notification-email.mjs";
 import { isValidNotificationEmail, shouldEmailNotification } from "../lib/notification-preferences.mjs";
@@ -29,4 +30,12 @@ test("notification email escapes untrusted content and links only to the configu
   assert.match(content.html, /Feed &lt;failed&gt;/);
   assert.match(content.html, /A &amp; B/);
   assert.match(content.html, /https:\/\/aven-brief\.vercel\.app\/admin\/automation/);
+});
+
+test("server delivery uses Gmail App Password authentication and no Resend endpoint", async () => {
+  const source = await readFile(new URL("../lib/admin-notification-email.ts", import.meta.url), "utf8");
+  assert.match(source, /service: "gmail"/);
+  assert.match(source, /GMAIL_USER/);
+  assert.match(source, /GMAIL_APP_PASSWORD/);
+  assert.doesNotMatch(source, /api\.resend\.com|RESEND_API_KEY/);
 });

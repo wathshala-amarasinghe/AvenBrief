@@ -24,8 +24,9 @@ The public site is available at `http://localhost:3000`. The protected admin are
 - `CRON_SECRET`
 - `GEMINI_API_KEY` (required for AI drafting and automated source-consistency verification)
 - `GEMINI_ARTICLE_MODEL` (optional; defaults to `gemini-flash-lite-latest`)
-- `RESEND_API_KEY` (optional; required when operational email notifications are enabled)
-- `NOTIFICATION_FROM_EMAIL` (optional; must use a sender accepted by Resend)
+- `GMAIL_USER` (optional; Gmail sender for operational notifications)
+- `GMAIL_APP_PASSWORD` (optional; Google App Password, never the normal account password)
+- `NOTIFICATION_FROM_EMAIL` (optional; defaults to `AvenBrief <GMAIL_USER>`)
 
 Never commit `.env.local` or expose the service-role key and cron secret to client code.
 

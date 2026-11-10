@@ -1,6 +1,8 @@
 import "server-only";
 
+import nodemailer from "nodemailer";
 import { buildNotificationEmail } from "@/lib/notification-email.mjs";
+import { sanitiseErrorMessage } from "@/lib/error-reporting.mjs";
 import { shouldEmailNotification } from "@/lib/notification-preferences.mjs";
 import { absoluteUrl } from "@/lib/site-metadata";
 import { getAdminSupabase } from "@/lib/supabase-admin";
@@ -14,9 +16,10 @@ type EmailNotification = {
 };
 
 function deliveryConfiguration() {
-  const apiKey = process.env.RESEND_API_KEY?.trim();
-  const from = process.env.NOTIFICATION_FROM_EMAIL?.trim();
-  return apiKey && from ? { apiKey, from } : null;
+  const user = process.env.GMAIL_USER?.trim().toLowerCase();
+  const appPassword = process.env.GMAIL_APP_PASSWORD?.replace(/\s/g, "");
+  const from = process.env.NOTIFICATION_FROM_EMAIL?.trim() || (user ? `AvenBrief <${user}>` : "");
+  return user && appPassword && from ? { user, appPassword, from } : null;
 }
 
 export function adminEmailDeliveryConfigured() {
@@ -43,27 +46,25 @@ export async function deliverAdminNotificationEmail(notification: EmailNotificat
 
   const content = buildNotificationEmail(notification, absoluteUrl("/"));
   try {
-    const response = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${configuration.apiKey}`,
-        "Content-Type": "application/json",
-        "Idempotency-Key": `avenbrief-notification-${notification.id}`,
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: configuration.user,
+        pass: configuration.appPassword,
       },
-      body: JSON.stringify({
-        from: configuration.from,
-        to: [recipient],
-        subject: content.subject,
-        html: content.html,
-        text: content.text,
-      }),
-      signal: AbortSignal.timeout(8_000),
+      connectionTimeout: 8_000,
+      greetingTimeout: 8_000,
+      socketTimeout: 12_000,
     });
-
-    if (!response.ok) {
-      const detail = (await response.text()).slice(0, 300);
-      throw new Error(`Resend returned ${response.status}: ${detail}`);
-    }
+    const senderDomain = configuration.user.split("@")[1] || "gmail.com";
+    await transporter.sendMail({
+      from: configuration.from,
+      to: recipient,
+      subject: content.subject,
+      html: content.html,
+      text: content.text,
+      messageId: `<avenbrief-notification-${notification.id}@${senderDomain}>`,
+    });
 
     await supabase
       .from("admin_notifications")
@@ -71,7 +72,9 @@ export async function deliverAdminNotificationEmail(notification: EmailNotificat
       .eq("id", notification.id)
       .is("email_sent_at", null);
   } catch (error) {
-    const message = error instanceof Error ? error.message.slice(0, 500) : "Email delivery failed.";
+    const message = sanitiseErrorMessage(
+      error instanceof Error ? error : "Email delivery failed.",
+    ).slice(0, 500);
     console.error("Admin notification email failed:", { notificationId: notification.id, message });
     await supabase
       .from("admin_notifications")

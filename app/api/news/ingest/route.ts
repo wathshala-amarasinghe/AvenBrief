@@ -2,6 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { runRssImport } from "@/lib/rss-import";
 import { runScheduledAiDrafts } from "@/lib/scheduled-ai-drafts";
+import { createAdminNotification } from "@/lib/admin-notifications";
 
 export const maxDuration = 300;
 
@@ -58,6 +59,14 @@ async function handleIngest(request: Request) {
     });
   } catch (error) {
     console.error("Scheduled RSS import failed:", error);
+    await createAdminNotification({
+      type: "rss_failure",
+      severity: "error",
+      title: "Scheduled RSS import failed",
+      message: "The scheduled import stopped before it could complete. Check the Vercel runtime logs and approved source configuration.",
+      href: "/admin/automation",
+      dedupeKey: `scheduled-import-failure:${new Date().toISOString().slice(0, 13)}`,
+    });
     return Response.json(
       { error: "Scheduled import failed." },
       { status: 500, headers: responseHeaders },

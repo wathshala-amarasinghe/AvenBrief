@@ -6,6 +6,7 @@ import {
   createStoryFingerprint,
 } from "@/lib/rss-story-dedup.mjs";
 import { getAdminSupabase } from "@/lib/supabase-admin";
+import { createAdminNotification } from "@/lib/admin-notifications";
 
 export type RssImportRunType = "manual" | "scheduled";
 export type RssImportRunStatus =
@@ -334,6 +335,14 @@ export async function runRssImport(
         const completedAt = new Date().toISOString();
         const message = errorMessage(error);
         console.error(`RSS source failed (${source.name}):`, message);
+        await createAdminNotification({
+          type: "rss_failure",
+          severity: "error",
+          title: `RSS import failed: ${source.name}`,
+          message,
+          href: "/admin/sources",
+          dedupeKey: `rss-source-failure:${activeRunId}:${source.id}`,
+        });
 
         const { error: sourceUpdateError } = await supabase
           .from("rss_sources")

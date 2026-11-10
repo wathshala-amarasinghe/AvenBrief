@@ -12,7 +12,7 @@ const MAX_SOURCE_CHARS = 24_000;
 const FETCH_TIMEOUT_MS = 15_000;
 const ALLOWED_CATEGORIES = ["World", "Technology", "Climate", "Finance", "Gaming"];
 const GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta";
-const DEFAULT_GEMINI_MODELS = [
+export const DEFAULT_GEMINI_MODELS = [
   "gemini-flash-lite-latest",
   "gemini-3.5-flash-lite",
   "gemini-3.8-flash",
@@ -107,7 +107,7 @@ async function assertPublicUrl(value: string) {
   return url;
 }
 
-async function fetchSourceText(sourceUrl: string) {
+export async function fetchSourceText(sourceUrl: string) {
   let currentUrl = sourceUrl;
 
   for (let redirect = 0; redirect <= 3; redirect += 1) {
@@ -159,7 +159,7 @@ async function fetchSourceText(sourceUrl: string) {
   throw new AiDraftError("source_unavailable", "The original source could not be opened.");
 }
 
-function responseText(value: unknown) {
+export function responseText(value: unknown) {
   if (!value || typeof value !== "object") return "";
   const response = value as {
     candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
@@ -171,7 +171,7 @@ function responseText(value: unknown) {
     .join("");
 }
 
-function normalizeGeminiModel(value: string | undefined) {
+export function normalizeGeminiModel(value: string | undefined) {
   const normalized = value?.trim().replace(/^['"]|['"]$/g, "").replace(/^models\//, "") ?? "";
   return /^gemini-[a-z0-9._-]+$/i.test(normalized) ? normalized : "";
 }
@@ -211,7 +211,7 @@ async function discoverGeminiModels(apiKey: string) {
     .sort((left, right) => rankGeminiModel(left) - rankGeminiModel(right));
 }
 
-async function requestGeminiDraft(args: {
+export async function requestGemini(args: {
   apiKey: string;
   models: string[];
   body: string;
@@ -331,7 +331,7 @@ export async function generateAiDraft(input: {
         responseJsonSchema: schema,
       },
     });
-  const { response, model } = await requestGeminiDraft({ apiKey, models, body: requestBody });
+  const { response, model } = await requestGemini({ apiKey, models, body: requestBody });
 
   const payload: unknown = await response.json();
   const output = responseText(payload);

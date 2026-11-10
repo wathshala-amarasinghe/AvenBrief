@@ -34,7 +34,7 @@ async function NotificationsContent() {
   await ensureAutomationHealthNotification();
   const { data: notifications, error } = await getAdminSupabase()
     .from("admin_notifications")
-    .select("id, type, severity, title, message, href, read_at, created_at")
+    .select("id, type, severity, title, message, href, read_at, created_at, email_sent_at, email_error")
     .order("created_at", { ascending: false })
     .limit(100);
   const unreadCount = notifications?.filter((item) => !item.read_at).length ?? 0;
@@ -56,7 +56,7 @@ async function NotificationsContent() {
         </div>
 
         {error ? (
-          <p role="alert" className="mt-8 rounded-xl bg-amber-50 p-5 text-amber-900">Apply <code>20261110000300_admin_notifications.sql</code> before using notifications.</p>
+          <p role="alert" className="mt-8 rounded-xl bg-amber-50 p-5 text-amber-900">Apply <code>20261110000300_admin_notifications.sql</code> and <code>20261110000500_email_notifications.sql</code> before using notifications.</p>
         ) : notifications?.length ? (
           <section className="mt-8 space-y-4" aria-label="Admin notifications">
             {notifications.map((notification) => {
@@ -71,6 +71,8 @@ async function NotificationsContent() {
                       </div>
                       <p className="mt-2 text-sm leading-6 text-muted">{notification.message}</p>
                       <p className="mt-2 text-xs text-muted">{formatTimestamp(notification.created_at)}</p>
+                      {notification.email_sent_at && <p className="mt-1 text-xs text-green-700">Email sent {formatTimestamp(notification.email_sent_at)}</p>}
+                      {!notification.email_sent_at && notification.email_error && <p className="mt-1 text-xs text-red-700">Email delivery failed. Check Settings and the server log.</p>}
                     </div>
                     <div className="flex flex-wrap items-center gap-3">
                       {notification.href && <Link href={notification.href} className="text-sm font-medium text-brand hover:underline">Open →</Link>}

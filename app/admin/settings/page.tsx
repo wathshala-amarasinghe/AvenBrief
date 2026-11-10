@@ -5,7 +5,9 @@ import AdminShell from "@/components/admin-shell";
 import SubmitButton from "@/components/submit-button";
 import { requireAdmin } from "@/lib/auth";
 import { getAdminSupabase } from "@/lib/supabase-admin";
+import { adminEmailDeliveryConfigured } from "@/lib/admin-notification-email";
 import { toggleImportPause, updateAiDraftAutomation } from "@/app/admin/sources/actions";
+import { sendTestNotificationEmail, updateEmailNotificationPreferences } from "./actions";
 
 export const metadata: Metadata = { title: "Settings | AvenBrief", robots: { index: false, follow: false } };
 
@@ -17,11 +19,21 @@ async function SettingsContent({ searchParams }: SettingsPageProps) {
   await connection();
   const { user } = await requireAdmin();
   const params = await searchParams;
-  const { data, error } = await getAdminSupabase()
-    .from("rss_import_settings")
-    .select("paused, auto_draft_enabled, auto_draft_limit")
-    .eq("id", 1)
-    .maybeSingle();
+  const supabase = getAdminSupabase();
+  const [automationResult, notificationResult] = await Promise.all([
+    supabase
+      .from("rss_import_settings")
+      .select("paused, auto_draft_enabled, auto_draft_limit")
+      .eq("id", 1)
+      .maybeSingle(),
+    supabase
+      .from("admin_notification_preferences")
+      .select("email_enabled, recipient_email, notify_draft_ready, notify_verification_passed, notify_verification_blocked, notify_ai_quota, notify_rss_failure, notify_automation_stale")
+      .eq("id", 1)
+      .maybeSingle(),
+  ]);
+  const { data, error } = automationResult;
+  const notificationPreferences = notificationResult.data;
   const paused = data?.paused ?? false;
   const autoDraftEnabled = data?.auto_draft_enabled ?? false;
   const autoDraftLimit = data?.auto_draft_limit ?? 1;
@@ -32,8 +44,23 @@ async function SettingsContent({ searchParams }: SettingsPageProps) {
       ? "Choose an automatic drafting limit between 1 and 3."
       : result === "ai_draft_settings_error"
         ? "Could not save automatic drafting settings. Apply the scheduled AI-drafts migration and try again."
+        : result === "notification_settings_saved"
+          ? "Email notification preferences saved."
+          : result === "invalid_notification_email"
+            ? "Enter a valid notification email address."
+            : result === "notification_settings_error"
+              ? "Could not save email preferences. Apply the email-notifications migration and try again."
+              : result === "notification_test_requested"
+                ? "Test notification created. Check Notifications for its email delivery status."
+                : result === "notification_email_not_configured"
+                  ? "Add the Resend environment variables and redeploy before sending a test."
+                  : result === "notification_email_disabled"
+                    ? "Enable email delivery and save a valid recipient before sending a test."
+                    : result === "notification_email_no_events"
+                      ? "Select at least one email alert type before sending a test."
         : "";
-  const noticeIsError = result === "invalid_ai_draft_settings" || result === "ai_draft_settings_error";
+  const noticeIsError = ["invalid_ai_draft_settings", "ai_draft_settings_error", "invalid_notification_email", "notification_settings_error", "notification_email_not_configured", "notification_email_disabled", "notification_email_no_events"].includes(result);
+  const deliveryConfigured = adminEmailDeliveryConfigured();
 
   return (
     <AdminShell current="/admin/settings" email={user.email}>
@@ -73,6 +100,51 @@ async function SettingsContent({ searchParams }: SettingsPageProps) {
                 <input name="auto_draft_limit" type="number" min={1} max={3} defaultValue={autoDraftLimit} required className="mt-2 w-full rounded-xl border border-border px-4 py-3" />
               </label>
               <SubmitButton pendingText="Saving…">Save automation</SubmitButton>
+            </form>
+          )}
+        </section>
+
+        <section className="mt-6 overflow-hidden rounded-[10px] border border-border bg-white">
+          <div className="border-b border-border px-6 py-5">
+            <h2 className="font-serif text-2xl font-semibold">Email notifications</h2>
+            <p className="mt-2 text-sm leading-6 text-muted">Send operational alerts through Resend. In-admin notifications remain available even when email is paused or unavailable.</p>
+          </div>
+          {notificationResult.error ? (
+            <p role="alert" className="m-6 rounded-lg bg-amber-50 p-4 text-sm text-amber-900">Apply <code>20261110000500_email_notifications.sql</code> before configuring email alerts.</p>
+          ) : (
+            <form action={updateEmailNotificationPreferences} className="space-y-6 px-6 py-6">
+              {!deliveryConfigured && (
+                <p role="status" className="rounded-lg bg-amber-50 p-4 text-sm leading-6 text-amber-900">Add <code>RESEND_API_KEY</code> and <code>NOTIFICATION_FROM_EMAIL</code> to Vercel, then redeploy. Preferences can be saved now, but no email will be sent until both variables exist.</p>
+              )}
+              <label className="flex items-start gap-3">
+                <input name="email_enabled" type="checkbox" defaultChecked={notificationPreferences?.email_enabled ?? false} className="mt-1 h-4 w-4" />
+                <span><span className="block font-medium">Enable operational email</span><span className="mt-1 block text-sm text-muted">Delivery status: {deliveryConfigured ? "Resend configured" : "Server credentials missing"}</span></span>
+              </label>
+              <label className="block max-w-xl text-sm font-medium">Recipient email
+                <input name="recipient_email" type="email" maxLength={254} required defaultValue={notificationPreferences?.recipient_email ?? user.email ?? ""} className="mt-2 w-full rounded-xl border border-border px-4 py-3" />
+              </label>
+              <fieldset>
+                <legend className="text-sm font-semibold">Send email for</legend>
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  {[
+                    ["notify_draft_ready", "New private draft", notificationPreferences?.notify_draft_ready],
+                    ["notify_verification_passed", "Verification passed", notificationPreferences?.notify_verification_passed],
+                    ["notify_verification_blocked", "Verification blocked or failed", notificationPreferences?.notify_verification_blocked],
+                    ["notify_ai_quota", "Gemini quota or configuration", notificationPreferences?.notify_ai_quota],
+                    ["notify_rss_failure", "RSS import or source failure", notificationPreferences?.notify_rss_failure],
+                    ["notify_automation_stale", "Automation overdue or stuck", notificationPreferences?.notify_automation_stale],
+                  ].map(([name, label, checked]) => (
+                    <label key={String(name)} className="flex items-center gap-3 rounded-lg border border-border px-4 py-3 text-sm">
+                      <input name={String(name)} type="checkbox" defaultChecked={checked !== false} className="h-4 w-4" />
+                      <span>{String(label)}</span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+              <div className="flex flex-wrap gap-3">
+                <SubmitButton pendingText="Saving…">Save email preferences</SubmitButton>
+                <button formAction={sendTestNotificationEmail} type="submit" className="rounded-lg border border-border bg-white px-5 py-3 text-sm font-medium hover:bg-soft">Send test email</button>
+              </div>
             </form>
           )}
         </section>

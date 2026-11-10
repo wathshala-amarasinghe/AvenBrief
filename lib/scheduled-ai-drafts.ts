@@ -3,6 +3,7 @@ import "server-only";
 import { createVerifiedAiDraft } from "@/lib/ai-draft-workflow";
 import { getAdminSupabase } from "@/lib/supabase-admin";
 import { parseScheduledDraftLimit } from "@/lib/scheduled-ai-draft-validation.mjs";
+import { rankScheduledStories } from "@/lib/scheduled-story-selection.mjs";
 
 export type ScheduledDraftSummary = {
   enabled: boolean;
@@ -11,7 +12,8 @@ export type ScheduledDraftSummary = {
   verificationPassed: number;
   verificationBlocked: number;
   failed: number;
-  skippedReason: "disabled" | "not_configured" | "no_new_items" | null;
+  rejected: number;
+  skippedReason: "disabled" | "not_configured" | "no_new_items" | "no_eligible_items" | "selection_failed" | null;
 };
 
 export async function runScheduledAiDrafts(
@@ -25,6 +27,7 @@ export async function runScheduledAiDrafts(
     verificationPassed: 0,
     verificationBlocked: 0,
     failed: 0,
+    rejected: 0,
   };
 
   if (!importedItemIds.length) return { ...empty, skippedReason: "no_new_items" };
@@ -42,7 +45,57 @@ export async function runScheduledAiDrafts(
   if (!settings.auto_draft_enabled) return { ...empty, skippedReason: "disabled" };
 
   const limit = parseScheduledDraftLimit(settings.auto_draft_limit) ?? 1;
-  const selectedIds = importedItemIds.slice(0, limit);
+  const supabase = getAdminSupabase();
+  const [storiesResult, articleSourcesResult] = await Promise.all([
+    supabase
+      .from("rss_inbox")
+      .select("id, title, source_name, source_url, source_published_at")
+      .in("id", importedItemIds)
+      .eq("status", "new"),
+    supabase
+      .from("articles")
+      .select("source_url")
+      .not("source_url", "is", null),
+  ]);
+
+  if (storiesResult.error || articleSourcesResult.error) {
+    console.error("Scheduled story selection could not be loaded:", {
+      stories: storiesResult.error?.message,
+      articles: articleSourcesResult.error?.message,
+    });
+    return { ...empty, enabled: true, skippedReason: "selection_failed" };
+  }
+
+  const selection = rankScheduledStories({
+    stories: storiesResult.data ?? [],
+    existingArticleUrls: (articleSourcesResult.data ?? [])
+      .map((article) => article.source_url)
+      .filter((url): url is string => Boolean(url)),
+    limit,
+  });
+  const selectedIds = selection.selectedIds;
+
+  if (selection.rejected.length) {
+    const { error: archiveError } = await supabase
+      .from("rss_inbox")
+      .update({ status: "archived", archived_at: new Date().toISOString() })
+      .in("id", selection.rejected.map((story) => story.id))
+      .eq("status", "new");
+
+    if (archiveError) {
+      console.error("Rejected scheduled stories could not be archived:", archiveError.message);
+    }
+  }
+
+  if (!selectedIds.length) {
+    return {
+      ...empty,
+      enabled: true,
+      rejected: selection.rejected.length,
+      skippedReason: "no_eligible_items",
+    };
+  }
+
   const summary: ScheduledDraftSummary = {
     enabled: true,
     attempted: selectedIds.length,
@@ -50,6 +103,7 @@ export async function runScheduledAiDrafts(
     verificationPassed: 0,
     verificationBlocked: 0,
     failed: 0,
+    rejected: selection.rejected.length,
     skippedReason: null,
   };
 

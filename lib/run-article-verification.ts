@@ -2,6 +2,7 @@ import "server-only";
 
 import { getAdminSupabase } from "@/lib/supabase-admin";
 import { generateArticleVerification } from "@/lib/article-verification";
+import { createAdminNotification } from "@/lib/admin-notifications";
 
 export type ArticleVerificationRunStatus =
   | "passed"
@@ -59,6 +60,17 @@ export async function runArticleVerification(articleId: string): Promise<Article
       .eq("id", run.id);
     if (completionError) throw completionError;
 
+    await createAdminNotification({
+      type: report.publishReady ? "verification_passed" : "verification_blocked",
+      severity: report.publishReady ? "info" : "warning",
+      title: report.publishReady ? "Article verification passed" : "Article verification blocked publishing",
+      message: report.publishReady
+        ? `The saved article passed source verification with a score of ${report.score}/100.`
+        : `The saved article scored ${report.score}/100 and requires editorial corrections before publishing.`,
+      href: `/admin/editor?id=${articleId}`,
+      dedupeKey: `verification:${run.id}`,
+    });
+
     return report.publishReady ? "passed" : "blocked";
   } catch (error) {
     const message = error instanceof Error ? error.message.slice(0, 500) : "Verification failed.";
@@ -68,6 +80,14 @@ export async function runArticleVerification(articleId: string): Promise<Article
       completed_at: new Date().toISOString(),
     }).eq("id", run.id);
     console.error("Article verification failed:", { message });
+    await createAdminNotification({
+      type: "verification_blocked",
+      severity: "error",
+      title: "Article verification failed",
+      message,
+      href: `/admin/editor?id=${articleId}`,
+      dedupeKey: `verification:${run.id}`,
+    });
     return "failed";
   }
 }

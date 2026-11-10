@@ -167,6 +167,7 @@ async function InboxContent({ searchParams }: InboxPageProps) {
     ai_source_unavailable: "The original article could not be read safely. Open the source and create a manual draft instead.",
     ai_generation_failed: "The AI service could not create a valid draft. Please try again or create a manual draft.",
     ai_insufficient_source: "The source did not contain enough reliable information for an AI draft.",
+    ai_quota_exhausted: "The Gemini API quota is exhausted. Wait for it to reset, then try again.",
     ai_running: "An AI draft is already being generated for this story.",
     ai_setup_required: "Apply migration 20261109000300_ai_draft_generation.sql before using AI drafts.",
   };

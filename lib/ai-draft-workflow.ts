@@ -6,6 +6,7 @@ import { isArticleId } from "@/lib/article-validation.mjs";
 import { runArticleVerification, type ArticleVerificationRunStatus } from "@/lib/run-article-verification";
 import { getAdminSupabase } from "@/lib/supabase-admin";
 import { sanitiseErrorMessage } from "@/lib/error-reporting.mjs";
+import { createAdminNotification } from "@/lib/admin-notifications";
 
 export type AiDraftWorkflowResult =
   | { status: "created"; articleId: string; verificationStatus: ArticleVerificationRunStatus }
@@ -104,6 +105,16 @@ export async function createVerifiedAiDraft(
     }
 
     const verificationStatus = await runArticleVerification(articleId);
+    await createAdminNotification({
+      type: "draft_ready",
+      severity: verificationStatus === "passed" ? "info" : "warning",
+      title: "New private AI draft ready",
+      message: verificationStatus === "passed"
+        ? "A new private draft was created and passed source verification. Add a credited image and complete the final editorial review."
+        : "A new private draft was created, but its verification report requires attention before publishing.",
+      href: `/admin/editor?id=${articleId}`,
+      dedupeKey: `draft-ready:${generation.id}`,
+    });
     return { status: "created", articleId, verificationStatus };
   } catch (error) {
     const message = sanitiseErrorMessage(
@@ -118,6 +129,18 @@ export async function createVerifiedAiDraft(
       code: error instanceof AiDraftError ? error.code : "database_or_unknown",
       message,
     });
+    if (error instanceof AiDraftError && ["quota_exhausted", "not_configured"].includes(error.code)) {
+      await createAdminNotification({
+        type: "ai_quota",
+        severity: "error",
+        title: error.code === "quota_exhausted" ? "Gemini quota exhausted" : "Gemini is not configured",
+        message: error.code === "quota_exhausted"
+          ? "Automatic drafting stopped because the Gemini API quota is exhausted. Check Google AI Studio usage and wait for the quota reset."
+          : "Automatic drafting cannot run because GEMINI_API_KEY is missing from the server environment.",
+        href: "/admin/automation",
+        dedupeKey: `ai-service:${error.code}:${new Date().toISOString().slice(0, 10)}`,
+      });
+    }
     return {
       status: "failed",
       resultCode: error instanceof AiDraftError ? `ai_${error.code}` : "ai_generation_failed",

@@ -29,7 +29,7 @@ export type AiDraft = {
 };
 
 export class AiDraftError extends Error {
-  code: "not_configured" | "source_unavailable" | "generation_failed" | "insufficient_source";
+  code: "not_configured" | "source_unavailable" | "generation_failed" | "insufficient_source" | "quota_exhausted";
 
   constructor(code: AiDraftError["code"], message: string) {
     super(message);
@@ -252,6 +252,10 @@ export async function requestGemini(args: {
       model,
       message: errorMessage,
     });
+
+    if (response.status === 429 || /quota|resource exhausted/i.test(errorMessage ?? "")) {
+      throw new AiDraftError("quota_exhausted", "The Gemini API quota is currently exhausted.");
+    }
 
     if (response.status !== 404) {
       throw new AiDraftError("generation_failed", "The AI service could not generate this draft.");

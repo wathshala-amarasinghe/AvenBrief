@@ -6,6 +6,7 @@ import AdminShell from "@/components/admin-shell";
 import { requireAdmin } from "@/lib/auth";
 import { buildAutomationMonitoring } from "@/lib/automation-monitoring.mjs";
 import { getAdminSupabase } from "@/lib/supabase-admin";
+import { ensureAutomationHealthNotification } from "@/lib/admin-notifications";
 
 export const metadata: Metadata = {
   title: "Automation Monitor | AvenBrief",
@@ -17,8 +18,8 @@ function formatTimestamp(value?: string | null) {
   return new Intl.DateTimeFormat("en", {
     dateStyle: "medium",
     timeStyle: "short",
-    timeZone: "UTC",
-  }).format(new Date(value)) + " UTC";
+    timeZone: "Asia/Colombo",
+  }).format(new Date(value)) + " Sri Lanka time";
 }
 
 function stateStyle(value: string) {
@@ -31,6 +32,7 @@ function stateStyle(value: string) {
 async function AutomationContent() {
   await connection();
   const { user } = await requireAdmin();
+  await ensureAutomationHealthNotification();
   const supabase = getAdminSupabase();
   const [runsResult, generationsResult, settingsResult] = await Promise.all([
     supabase

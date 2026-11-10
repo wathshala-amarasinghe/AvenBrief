@@ -5,6 +5,7 @@ import { connection } from "next/server";
 import { notFound } from "next/navigation";
 import ArticleEditor from "@/components/article-editor";
 import AdminShell from "@/components/admin-shell";
+import VerificationRunControl from "@/components/verification-run-control";
 import { requireAdmin } from "@/lib/auth";
 import { getAdminSupabase } from "@/lib/supabase-admin";
 import { isArticleId } from "@/lib/article-validation.mjs";
@@ -152,12 +153,13 @@ async function EditorContent({ searchParams }: EditorPageProps) {
               <h2 id="verification-heading" className="mt-2 font-serif text-2xl font-semibold">Automated editorial verification</h2>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">Checks the saved title, summary, and article claims against the original source. It cannot prove that the publisher itself is truthful.</p>
             </div>
-            <form action={verifyArticle}>
-              <input type="hidden" name="id" value={article.id} />
-              <button type="submit" disabled={verificationSetupRequired || verification?.status === "running"} className="rounded-[8px] bg-brand px-5 py-3 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">
-                {verification?.status === "running" ? "Verification running…" : verification ? "Run verification again" : "Run automated verification"}
-              </button>
-            </form>
+            <VerificationRunControl
+              action={verifyArticle}
+              articleId={article.id}
+              disabled={verificationSetupRequired}
+              hasReport={Boolean(verification)}
+              status={verification?.status ?? null}
+            />
           </div>
 
           {verificationNotice && <p role="status" className="mt-4 rounded-lg bg-soft p-3 text-sm text-brand">{verificationNotice}</p>}

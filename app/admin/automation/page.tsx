@@ -37,7 +37,7 @@ async function AutomationContent() {
   const [runsResult, generationsResult, settingsResult] = await Promise.all([
     supabase
       .from("rss_import_runs")
-      .select("id, status, started_at, completed_at, items_imported, error")
+      .select("*")
       .eq("run_type", "scheduled")
       .order("started_at", { ascending: false })
       .limit(10),
@@ -105,9 +105,10 @@ async function AutomationContent() {
           <p role="alert" className="mt-6 rounded-xl bg-amber-50 p-4 text-sm text-amber-900">Apply <code>20261110000200_ai_automation_monitoring.sql</code> and confirm the earlier automation migrations are installed.</p>
         )}
 
-        <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6" aria-label="Latest automation run summary">
+        <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7" aria-label="Latest automation run summary">
           {[
             ["Stories imported", monitoring.summary.storiesImported],
+            ["Queue archived", monitoring.summary.queueArchived],
             ["Drafts attempted", monitoring.summary.draftsAttempted],
             ["Drafts created", monitoring.summary.draftsCreated],
             ["Verification passed", monitoring.summary.verificationPassed],

@@ -18,6 +18,8 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+export const maxDuration = 300;
+
 type EditorPageProps = {
   searchParams: Promise<{
     id?: string | string[];

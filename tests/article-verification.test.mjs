@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { validateVerificationResult } from "../lib/article-verification-validation.mjs";
+
+const inboxActions = await readFile(new URL("../app/admin/inbox/actions.ts", import.meta.url), "utf8");
 
 const supportedClaim = {
   claim: "The report describes women discussing marriage pressure online.",
@@ -47,4 +50,15 @@ test("malformed verification output is rejected", () => {
     warnings: [],
     claims: [],
   }).ok, false);
+});
+
+test("AI draft creation automatically runs verification before opening the editor", () => {
+  const verificationCall = "const verificationStatus = await runArticleVerification(articleId);";
+  const verificationIndex = inboxActions.indexOf(verificationCall);
+  const redirectIndex = inboxActions.indexOf(
+    "redirect(`/admin/editor?id=${articleId}&generated=1&verification=${verificationStatus}`);",
+  );
+
+  assert.ok(verificationIndex > -1, "AI draft creation must run source verification");
+  assert.ok(redirectIndex > verificationIndex, "the editor must open after verification finishes");
 });

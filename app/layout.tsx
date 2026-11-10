@@ -28,6 +28,11 @@ export const metadata: Metadata = {
   creator: "AvenBrief",
   publisher: "AvenBrief",
   category: "news",
+  icons: {
+    icon: [{ url: "/icon.png?v=3", type: "image/png", sizes: "512x512" }],
+    shortcut: "/icon.png?v=3",
+    apple: [{ url: "/icon.png?v=3", type: "image/png", sizes: "512x512" }],
+  },
   referrer: "origin-when-cross-origin",
   keywords: ["world news", "technology", "climate", "finance", "gaming", "global updates"],
   alternates: {

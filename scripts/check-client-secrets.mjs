@@ -8,6 +8,7 @@ const serverOnlyNames = [
   "RSS_INGEST_SECRET",
   "ADMIN_USER_ID",
   "GEMINI_API_KEY",
+  "RESEND_API_KEY",
 ];
 
 function readLocalEnvironment() {

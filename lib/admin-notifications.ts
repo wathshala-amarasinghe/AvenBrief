@@ -3,6 +3,7 @@ import "server-only";
 import { sanitiseErrorMessage } from "@/lib/error-reporting.mjs";
 import { getAdminSupabase } from "@/lib/supabase-admin";
 import { automationHealthState } from "@/lib/admin-notification-rules.mjs";
+import { deliverAdminNotificationEmail } from "@/lib/admin-notification-email";
 
 export type AdminNotificationType =
   | "draft_ready"
@@ -20,23 +21,29 @@ export async function createAdminNotification(input: {
   href?: string | null;
   dedupeKey: string;
 }) {
-  const { error } = await getAdminSupabase()
+  const { data, error } = await getAdminSupabase()
     .from("admin_notifications")
-    .upsert({
+    .insert({
       type: input.type,
       severity: input.severity,
       title: input.title.slice(0, 160),
       message: sanitiseErrorMessage(input.message).slice(0, 1000),
       href: input.href?.startsWith("/admin") ? input.href.slice(0, 500) : null,
       dedupe_key: input.dedupeKey.slice(0, 300),
-    }, { onConflict: "dedupe_key", ignoreDuplicates: true });
+    })
+    .select("id, type, title, message, href")
+    .single();
 
   if (error) {
+    if (error.code === "23505") return;
     console.error("Admin notification could not be saved:", {
       code: error.code,
       message: error.message,
     });
+    return;
   }
+
+  if (data) await deliverAdminNotificationEmail(data);
 }
 
 export async function ensureAutomationHealthNotification(now = new Date()) {

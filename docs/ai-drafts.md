@@ -1,6 +1,6 @@
 # AI-assisted drafts
 
-AI drafting is an optional admin-only step for an imported RSS story. It reads the original publisher page, creates an editable AvenBrief draft, and records the model, confidence score, warnings, outcome, and timestamps. It never publishes an article.
+AI drafting is an admin-only workflow for imported RSS stories. It reads the original publisher page, creates an editable AvenBrief draft, records the model, confidence score, warnings, outcome, and timestamps, and runs source-consistency verification. It never publishes an article.
 
 ## Setup
 
@@ -19,6 +19,12 @@ The API key is server-only. Do not prefix it with `NEXT_PUBLIC_`, commit it, pas
 4. Review the confidence score and every warning in the editor.
 5. Check names, dates, quotations, figures, attribution, category, source link, image rights, and overall originality.
 6. Improve the article and add a credited featured image before publishing.
+
+## Scheduled drafting
+
+Apply `supabase/migrations/20261110000100_scheduled_ai_drafts.sql`, then open **Admin → Settings → Automatic AI drafts**. Scheduled RSS runs can draft between one and three newly imported stories per run. The default is one to protect API quotas. Drafting is sequential, verification runs immediately, and every resulting article remains private until an administrator publishes it.
+
+Pausing RSS imports also prevents scheduled drafting because no new stories are imported. The separate automatic-drafting switch can stop AI generation while leaving RSS importing active.
 
 If the publisher blocks automated reading or exposes too little article text, use **Create a blank draft instead**. The application deliberately refuses to generate from a headline alone.
 

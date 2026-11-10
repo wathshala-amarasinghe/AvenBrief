@@ -22,6 +22,7 @@ export type RssImportSummary = {
   sourcesSucceeded: number;
   sourcesFailed: number;
   itemsImported: number;
+  importedItemIds: string[];
 };
 
 type RssSource = {
@@ -107,6 +108,7 @@ export async function runRssImport(
       sourcesSucceeded: 0,
       sourcesFailed: 0,
       itemsImported: 0,
+      importedItemIds: [],
     };
   }
 
@@ -152,6 +154,7 @@ export async function runRssImport(
       sourcesSucceeded: 0,
       sourcesFailed: 0,
       itemsImported: 0,
+      importedItemIds: [],
     };
   }
 
@@ -187,12 +190,14 @@ export async function runRssImport(
         sourcesSucceeded: 0,
         sourcesFailed: 0,
         itemsImported: 0,
+        importedItemIds: [],
       };
     }
 
     let sourcesSucceeded = 0;
     let sourcesFailed = 0;
     let itemsImported = 0;
+    const importedItemIds: string[] = [];
 
     for (const source of sources) {
       const sourceStartedAt = new Date().toISOString();
@@ -287,6 +292,7 @@ export async function runRssImport(
 
           if (importError) throw importError;
           newItems = inserted?.length ?? 0;
+          importedItemIds.push(...(inserted ?? []).map((item) => item.id));
 
           const { error: linkError } = await supabase
             .from("rss_inbox")
@@ -388,6 +394,7 @@ export async function runRssImport(
       sourcesSucceeded,
       sourcesFailed,
       itemsImported,
+      importedItemIds,
     };
   } catch (error) {
     const message = errorMessage(error);

@@ -1,6 +1,9 @@
 import { timingSafeEqual } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { runRssImport } from "@/lib/rss-import";
+import { runScheduledAiDrafts } from "@/lib/scheduled-ai-drafts";
+
+export const maxDuration = 300;
 
 const responseHeaders = { "Cache-Control": "private, no-store" };
 
@@ -38,11 +41,17 @@ async function handleIngest(request: Request) {
 
   try {
     const summary = await runRssImport("scheduled");
+    const drafting = await runScheduledAiDrafts(summary.importedItemIds);
+    const { importedItemIds: _importedItemIds, ...publicSummary } = summary;
+    void _importedItemIds;
 
+    revalidatePath("/admin");
+    revalidatePath("/admin/analytics");
     revalidatePath("/admin/inbox");
     revalidatePath("/admin/sources");
+    revalidatePath("/admin/editor");
 
-    return Response.json(summary, {
+    return Response.json({ ...publicSummary, drafting }, {
       status: summary.status === "failed" ? 500 : 200,
       headers: responseHeaders,
     });

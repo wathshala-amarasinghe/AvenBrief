@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { runRssImport } from "@/lib/rss-import";
 import { runScheduledAiDrafts } from "@/lib/scheduled-ai-drafts";
 import { createAdminNotification } from "@/lib/admin-notifications";
+import { runQueueRetention } from "@/lib/rss-queue-maintenance";
 
 export const maxDuration = 300;
 
@@ -42,6 +43,7 @@ async function handleIngest(request: Request) {
 
   try {
     const summary = await runRssImport("scheduled");
+    const queueMaintenance = await runQueueRetention(summary.runId);
     const drafting = await runScheduledAiDrafts(summary.importedItemIds, summary.runId);
     const { importedItemIds: _importedItemIds, ...publicSummary } = summary;
     void _importedItemIds;
@@ -53,7 +55,7 @@ async function handleIngest(request: Request) {
     revalidatePath("/admin/sources");
     revalidatePath("/admin/editor");
 
-    return Response.json({ ...publicSummary, drafting }, {
+    return Response.json({ ...publicSummary, queueMaintenance, drafting }, {
       status: summary.status === "failed" ? 500 : 200,
       headers: responseHeaders,
     });

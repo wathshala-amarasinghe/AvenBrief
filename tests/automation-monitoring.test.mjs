@@ -4,7 +4,7 @@ import { buildAutomationMonitoring } from "../lib/automation-monitoring.mjs";
 
 test("automation monitoring reports exact outcomes for the latest scheduled run", () => {
   const result = buildAutomationMonitoring({
-    runs: [{ id: "run-2", items_imported: 2, started_at: "2026-11-10T01:00:00Z" }],
+    runs: [{ id: "run-2", items_imported: 2, queue_items_archived: 3, started_at: "2026-11-10T01:00:00Z" }],
     generations: [
       { id: "g-1", import_run_id: "run-2", inbox_id: "i-1", article_id: "a-1", status: "succeeded", started_at: "2026-11-10T01:01:00Z", error: null },
       { id: "g-2", import_run_id: "run-2", inbox_id: "i-2", article_id: null, status: "failed", started_at: "2026-11-10T01:02:00Z", error: "API quota 429" },
@@ -19,6 +19,7 @@ test("automation monitoring reports exact outcomes for the latest scheduled run"
 
   assert.deepEqual(result.summary, {
     storiesImported: 2,
+    queueArchived: 3,
     draftsAttempted: 2,
     draftsCreated: 1,
     verificationPassed: 1,

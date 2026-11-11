@@ -5,6 +5,7 @@ import { parseScheduledDraftLimit } from "../lib/scheduled-ai-draft-validation.m
 import {
   buildScheduledAttemptQueue,
   rankScheduledStories,
+  scheduledDraftCooldownCutoff,
 } from "../lib/scheduled-story-selection.mjs";
 
 const ingestRoute = await readFile(new URL("../app/api/news/ingest/route.ts", import.meta.url), "utf8");
@@ -18,7 +19,7 @@ test("scheduled AI drafting accepts only the supported per-run limits", () => {
   assert.equal(parseScheduledDraftLimit("not-a-number"), null);
 });
 
-test("scheduled ingestion passes only newly imported stories to automatic drafting", () => {
+test("scheduled ingestion passes new story IDs as drafting priorities", () => {
   assert.match(ingestRoute, /runScheduledAiDrafts\(summary\.importedItemIds, summary\.runId\)/);
   assert.match(ingestRoute, /const summary = await runRssImport\("scheduled"\)/);
 });
@@ -48,6 +49,20 @@ test("scheduled selection prefers authoritative reporting over feed order", () =
   });
 
   assert.deepEqual(result.selectedIds, ["un"]);
+});
+
+test("new imports rank before backlog stories", () => {
+  const result = rankScheduledStories({
+    stories: [
+      story({ id: "backlog", source_name: "UN News", title: "High authority backlog story" }),
+      story({ id: "new", source_name: "Polygon", title: "Newly imported story" }),
+    ],
+    preferredIds: ["new"],
+    limit: 2,
+    now: "2026-11-10T12:00:00Z",
+  });
+
+  assert.deepEqual(result.selectedIds, ["new", "backlog"]);
 });
 
 test("scheduled selection rejects stale, duplicate, promotional, routine, and rumor items", () => {
@@ -102,6 +117,13 @@ test("scheduled drafting keeps a bounded fallback queue", () => {
   assert.deepEqual(buildScheduledAttemptQueue(ranked, 3), ["story-1", "story-2", "story-3", "story-4", "story-5"]);
 });
 
+test("scheduled failure cooldown lasts twenty-four hours", () => {
+  assert.equal(
+    scheduledDraftCooldownCutoff("2026-11-11T12:00:00Z"),
+    "2026-11-10T12:00:00.000Z",
+  );
+});
+
 test("scheduled drafting retries candidates but stops at its success and provider limits", async () => {
   const workflow = await readFile(new URL("../lib/scheduled-ai-drafts.ts", import.meta.url), "utf8");
 
@@ -109,4 +131,7 @@ test("scheduled drafting retries candidates but stops at its success and provide
   assert.match(workflow, /summary\.attempted \+= 1/);
   assert.match(workflow, /ai_quota_exhausted/);
   assert.match(workflow, /ai_not_configured/);
+  assert.match(workflow, /\.eq\("status", "new"\)/);
+  assert.doesNotMatch(workflow, /if \(!importedItemIds\.length\)/);
+  assert.match(workflow, /scheduledDraftCooldownCutoff/);
 });

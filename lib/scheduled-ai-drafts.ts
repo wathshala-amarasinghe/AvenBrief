@@ -6,6 +6,7 @@ import { parseScheduledDraftLimit } from "@/lib/scheduled-ai-draft-validation.mj
 import {
   buildScheduledAttemptQueue,
   rankScheduledStories,
+  scheduledDraftCooldownCutoff,
 } from "@/lib/scheduled-story-selection.mjs";
 
 export type ScheduledDraftSummary = {
@@ -16,7 +17,8 @@ export type ScheduledDraftSummary = {
   verificationBlocked: number;
   failed: number;
   rejected: number;
-  skippedReason: "disabled" | "not_configured" | "no_new_items" | "no_eligible_items" | "selection_failed" | null;
+  cooldownSkipped: number;
+  skippedReason: "disabled" | "not_configured" | "no_eligible_items" | "selection_failed" | null;
 };
 
 export async function runScheduledAiDrafts(
@@ -31,9 +33,8 @@ export async function runScheduledAiDrafts(
     verificationBlocked: 0,
     failed: 0,
     rejected: 0,
+    cooldownSkipped: 0,
   };
-
-  if (!importedItemIds.length) return { ...empty, skippedReason: "no_new_items" };
 
   const { data: settings, error } = await getAdminSupabase()
     .from("rss_import_settings")
@@ -49,31 +50,49 @@ export async function runScheduledAiDrafts(
 
   const limit = parseScheduledDraftLimit(settings.auto_draft_limit) ?? 1;
   const supabase = getAdminSupabase();
-  const [storiesResult, articleSourcesResult] = await Promise.all([
+  const [storiesResult, articleSourcesResult, recentFailuresResult] = await Promise.all([
     supabase
       .from("rss_inbox")
       .select("id, title, source_name, source_url, source_published_at")
-      .in("id", importedItemIds)
-      .eq("status", "new"),
+      .eq("status", "new")
+      .order("imported_at", { ascending: false })
+      .limit(500),
     supabase
       .from("articles")
       .select("source_url")
       .not("source_url", "is", null),
+    supabase
+      .from("ai_draft_generations")
+      .select("inbox_id")
+      .eq("trigger_type", "scheduled")
+      .eq("status", "failed")
+      .gte("started_at", scheduledDraftCooldownCutoff())
+      .limit(1000),
   ]);
 
-  if (storiesResult.error || articleSourcesResult.error) {
+  if (storiesResult.error || articleSourcesResult.error || recentFailuresResult.error) {
     console.error("Scheduled story selection could not be loaded:", {
       stories: storiesResult.error?.message,
       articles: articleSourcesResult.error?.message,
+      failures: recentFailuresResult.error?.message,
     });
     return { ...empty, enabled: true, skippedReason: "selection_failed" };
   }
 
+  const cooldownIds = new Set(
+    (recentFailuresResult.data ?? []).map((generation) => generation.inbox_id),
+  );
+  const activeStories = storiesResult.data ?? [];
+  const cooldownSkipped = activeStories
+    .filter((story) => cooldownIds.has(story.id)).length;
+  const eligibleForSelection = activeStories
+    .filter((story) => !cooldownIds.has(story.id));
   const selection = rankScheduledStories({
-    stories: storiesResult.data ?? [],
+    stories: eligibleForSelection,
     existingArticleUrls: (articleSourcesResult.data ?? [])
       .map((article) => article.source_url)
       .filter((url): url is string => Boolean(url)),
+    preferredIds: importedItemIds,
     limit,
   });
   const attemptIds = buildScheduledAttemptQueue(selection.ranked, limit);
@@ -95,6 +114,7 @@ export async function runScheduledAiDrafts(
       ...empty,
       enabled: true,
       rejected: selection.rejected.length,
+      cooldownSkipped,
       skippedReason: "no_eligible_items",
     };
   }
@@ -107,6 +127,7 @@ export async function runScheduledAiDrafts(
     verificationBlocked: 0,
     failed: 0,
     rejected: selection.rejected.length,
+    cooldownSkipped,
     skippedReason: null,
   };
 

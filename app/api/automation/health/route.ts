@@ -1,6 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { ensureAutomationHealthNotification } from "@/lib/admin-notifications";
+import { recoverStaleAutomationRuns } from "@/lib/automation-recovery";
 
 export const maxDuration = 30;
 
@@ -23,7 +24,9 @@ export async function GET(request: Request) {
     return Response.json({ error: "Unauthorized." }, { status: 401, headers: responseHeaders });
   }
 
+  const recovery = await recoverStaleAutomationRuns();
   await ensureAutomationHealthNotification();
   revalidatePath("/admin/notifications");
-  return Response.json({ checked: true }, { headers: responseHeaders });
+  revalidatePath("/admin/automation");
+  return Response.json({ checked: true, recovery }, { headers: responseHeaders });
 }

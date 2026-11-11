@@ -12,6 +12,7 @@ export async function verifyArticle(formData: FormData) {
   if (typeof id !== "string" || !isArticleId(id)) redirect("/admin/editor?verification=invalid");
 
   const status = await runArticleVerification(id);
+  revalidatePath("/admin/articles");
   revalidatePath("/admin/editor");
   redirect(`/admin/editor?id=${id}&verification=${status}`);
 }

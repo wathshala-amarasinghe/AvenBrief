@@ -120,6 +120,7 @@ export async function saveArticle(
   }
 
   revalidatePath("/admin");
+  revalidatePath("/admin/articles");
   revalidatePath("/admin/editor");
   revalidatePath("/");
   revalidatePath("/news/" + data.slug);

@@ -6,7 +6,7 @@ import { getAdminSupabase } from "@/lib/supabase-admin";
 
 const links = [
   { href: "/admin", label: "Overview", icon: "/figma/dashboard.svg" },
-  { href: "/admin/editor", label: "Articles", icon: "/figma/document.svg" },
+  { href: "/admin/articles", label: "Articles", icon: "/figma/document.svg" },
   { href: "/admin/inbox", label: "Review queue", icon: "/figma/clock.svg" },
   { href: "/admin/analytics", label: "Analytics", icon: "/figma/dashboard.svg" },
   { href: "/admin/automation", label: "Automation", icon: "/figma/clock.svg" },

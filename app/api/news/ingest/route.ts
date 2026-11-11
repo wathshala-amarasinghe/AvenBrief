@@ -50,6 +50,7 @@ async function handleIngest(request: Request) {
 
     revalidatePath("/admin");
     revalidatePath("/admin/analytics");
+    revalidatePath("/admin/articles");
     revalidatePath("/admin/automation");
     revalidatePath("/admin/inbox");
     revalidatePath("/admin/sources");

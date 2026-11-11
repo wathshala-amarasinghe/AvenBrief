@@ -7,6 +7,7 @@ import {
 } from "@/lib/rss-story-dedup.mjs";
 import { getAdminSupabase } from "@/lib/supabase-admin";
 import { createAdminNotification } from "@/lib/admin-notifications";
+import { recoverStaleAutomationRuns } from "@/lib/automation-recovery";
 
 export type RssImportRunType = "manual" | "scheduled";
 export type RssImportRunStatus =
@@ -80,6 +81,8 @@ export async function runRssImport(
   const startedAtIso = startedAt.toISOString();
   let runId: string | null = null;
 
+  await recoverStaleAutomationRuns(startedAt);
+
   const { data: settings, error: settingsError } = await supabase
     .from("rss_import_settings")
     .select("paused")
@@ -112,17 +115,6 @@ export async function runRssImport(
       importedItemIds: [],
     };
   }
-
-  const staleBefore = new Date(startedAt.getTime() - 20 * 60 * 1000).toISOString();
-  await supabase
-    .from("rss_import_runs")
-    .update({
-      status: "failed",
-      completed_at: startedAtIso,
-      error: "Run automatically closed after exceeding 20 minutes.",
-    })
-    .eq("status", "running")
-    .lt("started_at", staleBefore);
 
   const { data: run, error: runError } = await supabase
     .from("rss_import_runs")

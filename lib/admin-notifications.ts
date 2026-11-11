@@ -71,7 +71,7 @@ export async function ensureAutomationHealthNotification(now = new Date()) {
     severity: "error",
     title: stuck ? "Scheduled automation appears stuck" : "Scheduled automation is overdue",
     message: stuck
-      ? "The latest scheduled import has remained in progress for more than one hour. Check the Vercel function logs."
+      ? "The latest scheduled import has remained in progress for more than 10 minutes. AvenBrief attempted automatic recovery; check the Vercel function logs."
       : "No scheduled RSS import has completed within the last 26 hours. Check the Vercel cron configuration and runtime logs.",
     href: "/admin/automation",
     dedupeKey: `automation-health:${day}:${stuck ? "stuck" : "overdue"}`,

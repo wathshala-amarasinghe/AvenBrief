@@ -3,7 +3,10 @@ import "server-only";
 import { createVerifiedAiDraft } from "@/lib/ai-draft-workflow";
 import { getAdminSupabase } from "@/lib/supabase-admin";
 import { parseScheduledDraftLimit } from "@/lib/scheduled-ai-draft-validation.mjs";
-import { rankScheduledStories } from "@/lib/scheduled-story-selection.mjs";
+import {
+  buildScheduledAttemptQueue,
+  rankScheduledStories,
+} from "@/lib/scheduled-story-selection.mjs";
 
 export type ScheduledDraftSummary = {
   enabled: boolean;
@@ -73,7 +76,7 @@ export async function runScheduledAiDrafts(
       .filter((url): url is string => Boolean(url)),
     limit,
   });
-  const selectedIds = selection.selectedIds;
+  const attemptIds = buildScheduledAttemptQueue(selection.ranked, limit);
 
   if (selection.rejected.length) {
     const { error: archiveError } = await supabase
@@ -87,7 +90,7 @@ export async function runScheduledAiDrafts(
     }
   }
 
-  if (!selectedIds.length) {
+  if (!attemptIds.length) {
     return {
       ...empty,
       enabled: true,
@@ -98,7 +101,7 @@ export async function runScheduledAiDrafts(
 
   const summary: ScheduledDraftSummary = {
     enabled: true,
-    attempted: selectedIds.length,
+    attempted: 0,
     created: 0,
     verificationPassed: 0,
     verificationBlocked: 0,
@@ -107,13 +110,19 @@ export async function runScheduledAiDrafts(
     skippedReason: null,
   };
 
-  for (const inboxId of selectedIds) {
+  for (const inboxId of attemptIds) {
+    if (summary.created >= limit) break;
+    summary.attempted += 1;
     const result = await createVerifiedAiDraft(inboxId, {
       triggerType: "scheduled",
       importRunId,
     });
     if (result.status !== "created") {
       if (result.status !== "existing") summary.failed += 1;
+      if (
+        result.status === "setup_required" ||
+        (result.status === "failed" && ["ai_quota_exhausted", "ai_not_configured"].includes(result.resultCode))
+      ) break;
       continue;
     }
 

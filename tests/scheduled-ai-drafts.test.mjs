@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { parseScheduledDraftLimit } from "../lib/scheduled-ai-draft-validation.mjs";
-import { rankScheduledStories } from "../lib/scheduled-story-selection.mjs";
+import {
+  buildScheduledAttemptQueue,
+  rankScheduledStories,
+} from "../lib/scheduled-story-selection.mjs";
 
 const ingestRoute = await readFile(new URL("../app/api/news/ingest/route.ts", import.meta.url), "utf8");
 
@@ -86,4 +89,24 @@ test("scheduled selection is deterministic and enforces the per-run cap", () => 
 
   const result = rankScheduledStories({ stories, limit: 99, now: "2026-11-10T12:00:00Z" });
   assert.deepEqual(result.selectedIds, ["a", "b", "c"]);
+});
+
+test("scheduled drafting keeps a bounded fallback queue", () => {
+  const ranked = Array.from({ length: 8 }, (_, index) => ({
+    id: `story-${index + 1}`,
+    score: 100 - index,
+  }));
+
+  assert.deepEqual(buildScheduledAttemptQueue(ranked, 1), ["story-1", "story-2", "story-3"]);
+  assert.deepEqual(buildScheduledAttemptQueue(ranked, 2), ["story-1", "story-2", "story-3", "story-4"]);
+  assert.deepEqual(buildScheduledAttemptQueue(ranked, 3), ["story-1", "story-2", "story-3", "story-4", "story-5"]);
+});
+
+test("scheduled drafting retries candidates but stops at its success and provider limits", async () => {
+  const workflow = await readFile(new URL("../lib/scheduled-ai-drafts.ts", import.meta.url), "utf8");
+
+  assert.match(workflow, /if \(summary\.created >= limit\) break/);
+  assert.match(workflow, /summary\.attempted \+= 1/);
+  assert.match(workflow, /ai_quota_exhausted/);
+  assert.match(workflow, /ai_not_configured/);
 });

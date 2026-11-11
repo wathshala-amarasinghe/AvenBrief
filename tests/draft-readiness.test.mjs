@@ -5,6 +5,9 @@ import { classifyDraftReadiness } from "../lib/draft-readiness.mjs";
 
 const article = (overrides = {}) => ({
   created_at: "2026-11-10T00:00:00Z",
+  author_name: "AvenBrief Editorial Team",
+  summary: "A complete summary that is long enough to publish.",
+  body: "A complete article body with enough detail to satisfy publishing validation.",
   featured_image_url: null,
   image_alt: "",
   image_credit: "",
@@ -41,6 +44,20 @@ test("verified drafts identify missing images and final-review readiness", () =>
     verificationCurrent: true,
   });
   assert.equal(ready.state, "ready");
+});
+
+test("verified drafts require publishable editorial content before image work", () => {
+  const verification = { status: "completed", publish_ready: true };
+  const incomplete = classifyDraftReadiness({
+    article: article({ author_name: "", summary: "Too short", body: "" }),
+    verification,
+    verificationCurrent: true,
+  });
+
+  assert.equal(incomplete.state, "content");
+  assert.match(incomplete.reason, /author/);
+  assert.match(incomplete.reason, /summary/);
+  assert.match(incomplete.reason, /article body/);
 });
 
 test("draft readiness flags drafts after seven days", () => {

@@ -17,6 +17,7 @@ type DraftArticle = {
   title: string;
   category: string;
   created_at: string;
+  author_name: string;
   summary: string;
   body: string;
   source_url: string | null;
@@ -34,7 +35,7 @@ type Verification = {
 };
 
 type ReadinessItem = DraftArticle & {
-  state: "verification" | "image" | "ready";
+  state: "verification" | "content" | "image" | "ready";
   reason: string;
   old: boolean;
   ageDays: number;
@@ -45,6 +46,11 @@ const stateDetails = {
     title: "Verification blocked or needed",
     description: "Correct flagged claims or run verification on the saved article version.",
     badge: "bg-red-50 text-red-700",
+  },
+  content: {
+    title: "Content incomplete",
+    description: "Add the author, a useful summary, and a complete article body before image work.",
+    badge: "bg-violet-50 text-violet-700",
   },
   image: {
     title: "Waiting for image details",
@@ -78,7 +84,7 @@ function DraftRows({ items, empty }: { items: ReadinessItem[]; empty: string }) 
             <p className="mt-2 text-sm text-muted">{item.reason}</p>
           </div>
           <span className={`w-fit rounded-full px-3 py-1 text-xs font-medium ${stateDetails[item.state].badge}`}>
-            {item.state === "verification" ? "Verification" : item.state === "image" ? "Image needed" : "Ready"}
+            {item.state === "verification" ? "Verification" : item.state === "content" ? "Content needed" : item.state === "image" ? "Image needed" : "Ready"}
           </span>
           <Link href={`/admin/editor?id=${item.id}`} className="text-sm font-medium text-brand hover:underline">Open editor →</Link>
         </article>
@@ -93,7 +99,7 @@ export default async function ArticlesPage() {
   const supabase = getAdminSupabase();
   const draftResult = await supabase
     .from("articles")
-    .select("id, title, category, created_at, summary, body, source_url, featured_image_url, image_alt, image_credit", { count: "exact" })
+    .select("id, title, category, created_at, author_name, summary, body, source_url, featured_image_url, image_alt, image_credit", { count: "exact" })
     .eq("status", "draft")
     .order("created_at", { ascending: false })
     .limit(200);
@@ -124,6 +130,7 @@ export default async function ArticlesPage() {
   });
   const groups = {
     verification: items.filter((item) => item.state === "verification"),
+    content: items.filter((item) => item.state === "content"),
     image: items.filter((item) => item.state === "image"),
     ready: items.filter((item) => item.state === "ready"),
   };
@@ -145,9 +152,10 @@ export default async function ArticlesPage() {
         {setupError && <p role="alert" className="mt-6 rounded-xl bg-red-50 p-4 text-sm text-red-800">Some draft readiness data could not be loaded. Check the database migrations and server logs.</p>}
         {(draftResult.count ?? 0) > drafts.length && <p className="mt-6 rounded-xl bg-amber-50 p-4 text-sm text-amber-900">Showing the newest {drafts.length} of {draftResult.count} private drafts.</p>}
 
-        <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4" aria-label="Draft readiness totals">
+        <section className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-5" aria-label="Draft readiness totals">
           {[
             ["Verification", groups.verification.length, "Needs verification attention"],
+            ["Content", groups.content.length, "Missing required editorial content"],
             ["Image details", groups.image.length, "Verified, image work remains"],
             ["Ready", groups.ready.length, "Ready for final review"],
             ["Older drafts", older.length, "Seven days or older"],
@@ -160,7 +168,7 @@ export default async function ArticlesPage() {
           ))}
         </section>
 
-        {(["verification", "image", "ready"] as const).map((state) => (
+        {(["verification", "content", "image", "ready"] as const).map((state) => (
           <section key={state} className="mt-8 overflow-hidden rounded-xl border border-border bg-white">
             <div className="border-b border-border px-6 py-5">
               <h2 className="font-serif text-2xl font-semibold">{stateDetails[state].title}</h2>
